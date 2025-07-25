@@ -1,0 +1,66 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+dist/
+build/
+**/*.js
+**/*.d.ts
+!jest.*.js
+!cdk.json
+
+# CDK
+cdk.out/
+*.d.ts.map
+
+# AWS
+.aws/
+
+# Environment variables
+.env
+.env.*.local
+# .env.local is included as it contains only LocalStack test values
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Test coverage
+coverage/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+*.zip
+*.tar.gz
+
+# LocalStack and Docker volumes
+volume/
+.volumes/
+
+# Cache directories
+cache/
+.cache/
+**/cache/
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
