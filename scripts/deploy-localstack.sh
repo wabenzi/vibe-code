@@ -158,7 +158,7 @@ case "${1:-deploy}" in
         log_info "Checking LocalStack services status..."
         echo ""
         echo "Docker containers:"
-        docker ps --filter "name=localstack\|postgres" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        docker ps --filter "name=localstack" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
         echo ""
         if curl -s http://localhost:4566/_localstack/health >/dev/null 2>&1; then
             log_success "LocalStack is running"

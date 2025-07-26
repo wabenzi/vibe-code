@@ -6,6 +6,10 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+AWS_CLI_OPTS="--no-cli-pager --no-paginate"
+AWS_CLI_OPTS_SILENT="--no-cli-pager --no-paginate --output text"
+STACK_NAME="UserApiStack"
+DEFAULT_REGION="us-west-2"
 
 # Colors for output
 RED='\033[0;31m'
@@ -31,6 +35,13 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+get_account_id() {
+    aws sts get-caller-identity --query Account --output text
+}
+get_region() {
+    aws configure get region || echo "${DEFAULT_REGION}" 
+}
+
 # Set AWS environment (clear LocalStack variables)
 set_aws_env() {
     log_info "Setting AWS environment..."
@@ -40,15 +51,14 @@ set_aws_env() {
     export AWS_PAGER=""
     
     # Verify AWS credentials
-    if ! aws sts get-caller-identity --no-cli-pager >/dev/null 2>&1; then
+    if ! aws sts get-caller-identity >/dev/null 2>&1; then
         log_error "AWS credentials not configured or invalid"
         log_error "Please run 'aws configure' to set up your AWS credentials"
         exit 1
     fi
-    
-    local account_id=$(aws sts get-caller-identity --query Account --output text --no-cli-pager)
-    local region=$(aws configure get region)
-    log_success "AWS environment configured (Account: $account_id, Region: ${region:-us-west-2})"
+    local account_id=$(get_account_id)
+    local region=$(get_region)
+    log_success "AWS environment configured (Account: $account_id, Region: ${region:-$DEFAULT_REGION})"
 }
 
 # Check prerequisites
@@ -80,10 +90,10 @@ check_prerequisites() {
 bootstrap_cdk() {
     log_info "Checking CDK bootstrap status..."
     cd "$PROJECT_DIR"
-    
-    local account_id=$(aws sts get-caller-identity --query Account --output text --no-cli-pager)
-    local region=$(aws configure get region || echo "us-west-2")
-    
+
+    local account_id=$(get_account_id)
+    local region=$(get_region)
+
     # Check if already bootstrapped
     if aws cloudformation describe-stacks --stack-name CDKToolkit --region $region --no-cli-pager >/dev/null 2>&1; then
         log_success "CDK already bootstrapped for account $account_id in region $region"
@@ -153,21 +163,21 @@ show_deployment_info() {
 show_stack_info() {
     log_info "Fetching stack information..."
     cd "$PROJECT_DIR"
-    
-    if aws cloudformation describe-stacks --stack-name UserApiStack --no-cli-pager >/dev/null 2>&1; then
+
+    if aws cloudformation describe-stacks --stack-name $STACK_NAME --no-cli-pager >/dev/null 2>&1; then
         echo ""
         echo "📊 Stack Status:"
-        aws cloudformation describe-stacks --stack-name UserApiStack --query 'Stacks[0].StackStatus' --output text --no-cli-pager
+        aws cloudformation describe-stacks --stack-name $STACK_NAME --query 'Stacks[0].StackStatus' --output text --no-cli-pager
         
         echo ""
         echo "🔗 Stack Outputs:"
-        aws cloudformation describe-stacks --stack-name UserApiStack --query 'Stacks[0].Outputs' --output table --no-cli-pager
+        aws cloudformation describe-stacks --stack-name $STACK_NAME --query 'Stacks[0].Outputs' --output table --no-cli-pager
         
         echo ""
         echo "💸 Estimated Monthly Cost:"
         log_info "Use AWS Cost Calculator or Cost Explorer for detailed cost analysis"
     else
-        log_warning "UserApiStack not found or not accessible"
+        log_warning "${STACK_NAME} not found or not accessible"
     fi
 }
 

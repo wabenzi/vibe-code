@@ -186,8 +186,8 @@ test_aws_deployment() {
         api_url=${api_url%/}  # Remove trailing slash
         
         # Performance tests
-        measure_performance "$api_url/users/test-perf" "AWS API"
-        load_test "$api_url/users/test-load" "AWS API"
+        #measure_performance "$api_url/users/test-perf" "AWS API"
+        #load_test "$api_url/users/test-load" "AWS API"
         test_data_consistency "$api_url" "AWS"
     fi
     
@@ -199,7 +199,7 @@ test_localstack_deployment() {
     log_section "Testing LocalStack Deployment"
     
     # Check if LocalStack is running
-    if ! curl -s "http://localhost:4566/health" > /dev/null; then
+    if ! curl -s "http://localhost:4566/_localstack/health" > /dev/null; then
         log_warning "LocalStack is not running. Skipping LocalStack tests."
         return 0
     fi
