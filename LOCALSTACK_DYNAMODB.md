@@ -22,10 +22,10 @@ This document describes the LocalStack infrastructure that uses DynamoDB for loc
 - `bin/local-app.ts` - CDK app that deploys LocalStack stack
 
 ### Application Layer
-- `src/infrastructure/local-dynamo-user-repository.ts` - LocalStack DynamoDB repository
-- `src/services/local-dynamo-user-service.ts` - LocalStack-specific business logic
-- `src/lambda/create-user-localstack.ts` - Create user Lambda for LocalStack
-- `src/lambda/get-user-localstack.ts` - Get user Lambda for LocalStack
+- `src/infrastructure/dynamo-user-repository.ts` - Unified DynamoDB repository (supports both AWS and LocalStack)
+- `src/services/dynamo-user-service.ts` - Business logic with Effect TypeScript
+- `src/lambda/create-user.ts` - Create user Lambda (works with both AWS and LocalStack)
+- `src/lambda/get-user.ts` - Get user Lambda (works with both AWS and LocalStack)
 
 ### Configuration
 - Environment variables configured for LocalStack endpoints
