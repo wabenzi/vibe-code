@@ -24,7 +24,22 @@
     "local:test": "./scripts/local-dev.sh test",
     "local:logs": "./scripts/local-dev.sh logs",
     "local:reset": "./scripts/local-dev.sh reset",
-    "test:integration": "jest --config jest.integration.config.js"
+    "test:integration": "jest --config jest.integration.config.js",
+    "deploy:localstack": "scripts/deploy-localstack.sh",
+    "deploy:localstack:teardown": "scripts/deploy-localstack.sh teardown",
+    "deploy:localstack:status": "scripts/deploy-localstack.sh status",
+    "deploy:aws": "scripts/deploy-aws.sh",
+    "deploy:aws:teardown": "scripts/deploy-aws.sh teardown",
+    "deploy:aws:status": "scripts/deploy-aws.sh status",
+    "test:deployment": "scripts/test-deployment.sh",
+    "test:deployment:cleanup": "scripts/test-deployment.sh cleanup",
+    "test:deployment:check": "scripts/test-deployment.sh check",
+    "test:localstack": "scripts/test-localstack.sh",
+    "test:localstack:cleanup": "scripts/test-localstack.sh cleanup",
+    "test:all": "scripts/test-all.sh",
+    "test:all:aws": "scripts/test-all.sh aws",
+    "test:all:localstack": "scripts/test-all.sh localstack",
+    "test:all:performance": "scripts/test-all.sh performance"
   },
   "keywords": [
     "aws",
@@ -40,15 +55,17 @@
   "type": "commonjs",
   "dependencies": {
     "@aws-cdk/aws-lambda-nodejs": "^1.203.0",
-    "@aws-sdk/rds-signer": "^3.848.0",
+    "@aws-sdk/client-dynamodb": "^3.848.0",
+    "@aws-sdk/credential-providers": "^3.848.0",
+    "@aws-sdk/lib-dynamodb": "^3.850.0",
     "@effect/platform": "^0.90.0",
     "@effect/schema": "^0.75.5",
     "@types/pg": "^8.15.4",
     "aws-cdk-lib": "^2.207.0",
     "aws-lambda": "^1.0.7",
+    "aws-sdk": "^2.1692.0",
     "constructs": "^10.4.2",
     "effect": "^3.17.1",
-    "pg": "^8.16.3",
     "tslib": "^2.8.1"
   },
   "devDependencies": {

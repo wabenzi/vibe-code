@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { Effect } from 'effect'
-import { CreateUserRequest, ValidationError, DatabaseError } from '../domain/user'
-import { createUserWithLayer } from '../services/lambda-user-service'
+import { CreateUserRequest, ValidationError, UserResponse } from '../domain/user'
+import { createUserService } from '../services/dynamo-user-service'
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   console.log('Create User Lambda invoked', { event })
@@ -30,7 +30,16 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     })
 
     // Execute the Effect program
-    const result = await Effect.runPromise(createUserWithLayer(createUserRequest))
+    const userService = createUserService()
+    const result = await Effect.runPromise(userService.createUser(createUserRequest))
+
+    // Convert to response format
+    const userResponse = new UserResponse({
+      id: result.id,
+      name: result.name,
+      createdAt: result.createdAt.toISOString(),
+      updatedAt: result.updatedAt.toISOString(),
+    })
 
     return {
       statusCode: 201,
@@ -38,7 +47,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify(result),
+      body: JSON.stringify(userResponse),
     }
   } catch (error) {
     console.error('Error creating user:', error)
@@ -54,20 +63,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         body: JSON.stringify({
           error: error.message,
           details: error.errors,
-        }),
-      }
-    }
-
-    if (error instanceof DatabaseError) {
-      return {
-        statusCode: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-        body: JSON.stringify({
-          error: 'Database error occurred',
-          message: error.message,
         }),
       }
     }

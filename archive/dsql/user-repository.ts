@@ -30,7 +30,9 @@ export class DSQLUserRepository implements UserRepository {
     const port = 5432
     const username = 'admin' // DSQL uses 'admin' as the default user
     
-    // Generate auth token using RDS Signer
+    console.log(`Connecting to DSQL endpoint: ${host}:${port} as ${username}`)
+    
+    // Generate auth token using AWS SDK v3 RDS Signer
     const signer = new Signer({
       region: region,
       hostname: host,
@@ -39,6 +41,7 @@ export class DSQLUserRepository implements UserRepository {
     })
     
     const token = await signer.getAuthToken()
+    console.log(`Generated auth token, length: ${token.length}`)
 
     const client = new Client({
       host: host,
@@ -49,29 +52,36 @@ export class DSQLUserRepository implements UserRepository {
       ssl: {
         rejectUnauthorized: false,
       },
+      // Add connection timeout and statement timeout
+      connectionTimeoutMillis: 10000,
+      statement_timeout: 30000,
     })
 
     await client.connect()
+    console.log('Successfully connected to DSQL')
     return client
   }
 
   private async initializeDatabase(client: Client): Promise<void> {
-    // Create users table if it doesn't exist
-    const createTableSQL = `
-      CREATE TABLE IF NOT EXISTS users (
-        id VARCHAR(255) PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP NOT NULL,
-        updated_at TIMESTAMP NOT NULL
-      )
-    `
-
+    // The database should already be initialized by the custom resource
+    // Just verify the table exists, don't create it
+    console.log('Verifying database table exists...')
+    
     try {
-      await client.query(createTableSQL)
-      console.log('Database table initialized successfully')
+      const result = await client.query(`
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'users' 
+        LIMIT 1
+      `)
+      
+      if (result.rows.length === 0) {
+        console.warn('Users table does not exist - database may not be initialized')
+      } else {
+        console.log('Database table verification successful')
+      }
     } catch (error) {
-      console.warn('Failed to initialize database table:', error)
-      // Continue anyway - table might already exist
+      console.warn('Failed to verify database table:', error)
+      // Continue anyway - the custom resource should have set up the table
     }
   }
 
@@ -97,6 +107,7 @@ export class DSQLUserRepository implements UserRepository {
           client = await this.createConnection()
           await this.initializeDatabase(client)
           console.log('DSQL connection established') 
+          
           const insertSQL = `
             INSERT INTO users (id, name, created_at, updated_at)
             VALUES ($1, $2, $3, $4)

@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { User, CreateUserRequest, UserResponse, UserNotFoundError, DatabaseError, ValidationError } from "../domain/user"
-import { UserRepository, UserRepositoryLive } from "../infrastructure/simple-user-repository"
+import { UserRepository, UserRepositoryLive } from "../infrastructure/user-repository"
 
 // User Service functions for Lambda (using simple repository)
 export const createUser = (request: CreateUserRequest): Effect.Effect<UserResponse, DatabaseError | ValidationError, UserRepository> =>

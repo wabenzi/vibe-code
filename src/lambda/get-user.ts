@@ -1,7 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { Effect } from 'effect'
-import { ValidationError, DatabaseError, UserNotFoundError } from '../domain/user'
-import { getUserByIdWithLayer } from '../services/lambda-user-service'
+import { ValidationError, UserNotFoundError, UserResponse } from '../domain/user'
+import { createUserService } from '../services/dynamo-user-service'
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   console.log('Get User Lambda invoked', { event })
@@ -24,7 +24,16 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     // Execute the Effect program
-    const result = await Effect.runPromise(getUserByIdWithLayer(userId))
+    const userService = createUserService()
+    const user = await Effect.runPromise(userService.getUserById(userId))
+
+    // Convert to response format
+    const userResponse = new UserResponse({
+      id: user.id,
+      name: user.name,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
+    })
 
     return {
       statusCode: 200,
@@ -32,7 +41,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify(result),
+      body: JSON.stringify(userResponse),
     }
   } catch (error) {
     console.error('Error getting user:', error)
@@ -63,20 +72,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         body: JSON.stringify({
           error: error.message,
           details: error.errors,
-        }),
-      }
-    }
-
-    if (error instanceof DatabaseError) {
-      return {
-        statusCode: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-        body: JSON.stringify({
-          error: 'Database error occurred',
-          message: error.message,
         }),
       }
     }

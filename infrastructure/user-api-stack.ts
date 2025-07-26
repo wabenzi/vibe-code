@@ -3,6 +3,7 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 
@@ -17,26 +18,38 @@ export class UserApiStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // IAM role for Lambda functions to access DSQL
+    // DynamoDB Table for users
+    const usersTable = new dynamodb.Table(this, 'UsersTable', {
+      tableName: 'users-table',
+      partitionKey: {
+        name: 'id',
+        type: dynamodb.AttributeType.STRING,
+      },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      pointInTimeRecovery: false,
+    });
+
+    // IAM role for Lambda functions to access DynamoDB
     const lambdaRole = new iam.Role(this, 'UserApiLambdaRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
       ],
       inlinePolicies: {
-        DSQLAccess: new iam.PolicyDocument({
+        DynamoDBAccess: new iam.PolicyDocument({
           statements: [
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
               actions: [
-                'dsql:DescribeCluster',
-                'dsql:DescribeMultiRegionClusters',
-                'dsql:CreateDatabase',
-                'dsql:ListDatabases',
-                'dsql:DescribeDatabase',
-                'dsql:GenerateDbConnectAuthToken',
+                'dynamodb:GetItem',
+                'dynamodb:PutItem',
+                'dynamodb:UpdateItem',
+                'dynamodb:DeleteItem',
+                'dynamodb:Scan',
+                'dynamodb:Query',
               ],
-              resources: ['*'],
+              resources: [usersTable.tableArn],
             }),
           ],
         }),
@@ -51,16 +64,19 @@ export class UserApiStack extends cdk.Stack {
       role: lambdaRole,
       environment: {
         LOG_LEVEL: 'INFO',
-        DSQL_CLUSTER_ARN: process.env.DSQL_CLUSTER_ARN || '',
-        DSQL_DATABASE_NAME: 'users_db',
+        DYNAMODB_TABLE_NAME: usersTable.tableName,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
       logGroup: apiLogGroup,
       bundling: {
-        externalModules: ['aws-sdk'],
+        // Don't exclude AWS SDK v3 packages - bundle them
+        externalModules: [],
         minify: true,
         sourceMap: false,
+        // Force bundling of these packages to avoid runtime issues
+        nodeModules: ['@aws-sdk/client-dynamodb', '@aws-sdk/lib-dynamodb'],
+        target: 'node20',
       },
     });
 
@@ -72,23 +88,26 @@ export class UserApiStack extends cdk.Stack {
       role: lambdaRole,
       environment: {
         LOG_LEVEL: 'INFO',
-        DSQL_CLUSTER_ARN: process.env.DSQL_CLUSTER_ARN || '',
-        DSQL_DATABASE_NAME: 'users_db',
+        DYNAMODB_TABLE_NAME: usersTable.tableName,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
       logGroup: apiLogGroup,
       bundling: {
-        externalModules: ['aws-sdk'],
+        // Don't exclude AWS SDK v3 packages - bundle them
+        externalModules: [],
         minify: true,
         sourceMap: false,
+        // Force bundling of these packages to avoid runtime issues
+        nodeModules: ['@aws-sdk/client-dynamodb', '@aws-sdk/lib-dynamodb'],
+        target: 'node20',
       },
     });
 
     // API Gateway
     const api = new apigateway.RestApi(this, 'UserApi', {
       restApiName: 'User Management API',
-      description: 'API for managing users with DSQL persistence',
+      description: 'API for managing users with DynamoDB persistence',
       deployOptions: {
         stageName: 'prod',
         accessLogDestination: new apigateway.LogGroupLogDestination(apiLogGroup),
@@ -170,6 +189,11 @@ export class UserApiStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'GetUserFunctionName', {
       value: getUserFunction.functionName,
       description: 'Get User Lambda Function Name',
+    });
+
+    new cdk.CfnOutput(this, 'DynamoDbTableName', {
+      value: usersTable.tableName,
+      description: 'DynamoDB Users Table Name',
     });
   }
 }
