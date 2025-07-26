@@ -9,8 +9,22 @@ import {
 } from "@aws-sdk/lib-dynamodb"
 import { User, CreateUserRequest, UserNotFoundError } from "../domain/user"
 
-// DynamoDB configuration
-const dynamoClient = new DynamoDBClient({ region: process.env.AWS_REGION || 'us-west-2' })
+// DynamoDB configuration - supports both AWS and LocalStack
+const dynamoClientConfig: any = {
+  region: process.env.AWS_REGION || 'us-west-2'
+}
+
+// If DYNAMODB_ENDPOINT is set (for LocalStack), add endpoint configuration
+if (process.env.DYNAMODB_ENDPOINT) {
+  dynamoClientConfig.endpoint = process.env.DYNAMODB_ENDPOINT
+  // LocalStack credentials
+  dynamoClientConfig.credentials = {
+    accessKeyId: 'test',
+    secretAccessKey: 'test'
+  }
+}
+
+const dynamoClient = new DynamoDBClient(dynamoClientConfig)
 const docClient = DynamoDBDocumentClient.from(dynamoClient)
 
 const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'users-table'

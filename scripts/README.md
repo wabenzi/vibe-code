@@ -34,13 +34,14 @@ npm run test:deployment:cleanup
 ```
 
 ### 2. `test-localstack.sh` - LocalStack Testing
-Tests the LocalStack deployment for local development validation.
+Tests the LocalStack deployment with DynamoDB for local development validation.
 
 **Features:**
 - ✅ Verifies LocalStack is running
 - ✅ Tests API Gateway in LocalStack
-- ✅ Validates DynamoDB operations
+- ✅ Validates DynamoDB operations (same as AWS)
 - ✅ Local data persistence verification
+- ✅ Consistent with AWS deployment testing
 
 **Usage:**
 ```bash

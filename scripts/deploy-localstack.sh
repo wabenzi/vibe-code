@@ -42,7 +42,7 @@ check_docker() {
 # Set LocalStack environment
 set_localstack_env() {
     log_info "Setting LocalStack environment variables..."
-    export AWS_ENDPOINT_URL=http://localhost:4566
+    # Note: AWS_ENDPOINT_URL is automatically set by cdklocal, don't set it manually
     export AWS_ACCESS_KEY_ID=test
     export AWS_SECRET_ACCESS_KEY=test
     export AWS_DEFAULT_REGION=us-west-2
@@ -56,7 +56,7 @@ set_localstack_env() {
 
 # Start LocalStack services
 start_services() {
-    log_info "Starting LocalStack and PostgreSQL services..."
+    log_info "Starting LocalStack services..."
     cd "$PROJECT_DIR"
     docker-compose up -d
     
@@ -79,23 +79,6 @@ start_services() {
     
     if [ $attempts -eq $max_attempts ]; then
         log_error "LocalStack failed to start"
-        exit 1
-    fi
-    
-    # Check PostgreSQL
-    attempts=0
-    while [ $attempts -lt $max_attempts ]; do
-        if docker exec aws-test-postgres-1 pg_isready -U testuser >/dev/null 2>&1; then
-            log_success "PostgreSQL is ready"
-            break
-        fi
-        attempts=$((attempts + 1))
-        echo -n "."
-        sleep 2
-    done
-    
-    if [ $attempts -eq $max_attempts ]; then
-        log_error "PostgreSQL failed to start"
         exit 1
     fi
 }
@@ -131,11 +114,11 @@ show_info() {
     echo ""
     echo "🔗 Available services:"
     echo "  LocalStack: http://localhost:4566"
-    echo "  PostgreSQL: localhost:5432 (testuser/testpass)"
+    echo "  DynamoDB: Available through LocalStack endpoint"
     echo ""
     echo "📝 Next steps:"
     echo "  1. Test the API endpoints (check deployment output for API Gateway URL)"
-    echo "  2. Run integration tests: npm run test:integration"
+    echo "  2. Run integration tests: npm run test:localstack"
     echo "  3. Check logs: docker logs localstack-main"
     echo ""
     echo "🛑 To teardown:"

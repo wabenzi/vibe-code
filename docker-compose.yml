@@ -9,7 +9,7 @@ services:
       # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
       - DEBUG=${DEBUG:-0}
       - DOCKER_HOST=unix:///var/run/docker.sock
-      - SERVICES=lambda,apigateway,logs,iam,sts,rds,cloudformation,s3,ssm
+      - SERVICES=lambda,apigateway,logs,iam,sts,dynamodb,cloudformation,s3,ssm
       - PERSISTENCE=${PERSISTENCE:-0}
       - AWS_DEFAULT_REGION=us-west-2
       - AWS_ACCESS_KEY_ID=test
@@ -23,24 +23,6 @@ services:
     networks:
       - localstack-network
 
-  postgres:
-    image: postgres:15
-    container_name: localstack-postgres
-    environment:
-      POSTGRES_DB: users_db
-      POSTGRES_USER: testuser
-      POSTGRES_PASSWORD: testpass
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    networks:
-      - localstack-network
-
 networks:
   localstack-network:
     driver: bridge
-
-volumes:
-  postgres_data:

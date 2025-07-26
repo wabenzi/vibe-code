@@ -56,11 +56,11 @@ export class LocalUserApiStack extends cdk.Stack {
       },
     });
 
-    // Environment variables for LocalStack - let AWS SDK use default configuration
+    // Environment variables for LocalStack - only difference is the endpoint
     const localEnvironment = {
       LOG_LEVEL: 'DEBUG', // More verbose logging for local development
       DYNAMODB_TABLE_NAME: usersTable.tableName,
-      // Note: Don't set DYNAMODB_ENDPOINT - let LocalStack intercept AWS SDK calls automatically
+      DYNAMODB_ENDPOINT: 'http://localhost:4566', // LocalStack-specific endpoint
     };
 
     // Create User Lambda Function (same code as AWS, just different environment)

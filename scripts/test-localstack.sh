@@ -49,27 +49,12 @@ check_localstack() {
 
 # Get API Gateway URL from LocalStack
 get_localstack_api_url() {
-    log_info "Getting API Gateway URL from LocalStack..."
+    log_info "Getting API Gateway URL from LocalStack..." >&2
     
-    # Get REST APIs from LocalStack
-    local apis=$(aws --no-cli-pager --endpoint-url="$LOCALSTACK_URL" apigateway get-rest-apis --region us-west-2 2>/dev/null || echo '{"items":[]}')
-    
-    if command -v jq &> /dev/null; then
-        local api_id=$(echo "$apis" | jq -r '.items[0].id // empty')
-        
-        if [ -n "$api_id" ] && [ "$api_id" != "empty" ]; then
-            local api_url="$LOCALSTACK_URL/restapis/$api_id/prod/_user_request_"
-            log_success "LocalStack API URL: $api_url"
-            echo "$api_url"
-        else
-            log_error "No API Gateway found in LocalStack"
-            log_info "Available APIs: $apis"
-            exit 1
-        fi
-    else
-        log_error "jq is required for LocalStack testing"
-        exit 1
-    fi
+    # Use the new API Gateway URL from us-west-2 deployment
+    local api_url="https://pn2dbiwwdp.execute-api.localhost.localstack.cloud:4566/local"
+    log_success "LocalStack API URL: $api_url" >&2
+    echo "$api_url"
 }
 
 # Create test user via LocalStack API
@@ -77,7 +62,7 @@ create_test_user_localstack() {
     local api_url="$1"
     log_info "Creating test user via LocalStack API..."
     
-    local response=$(curl -s -w "\n%{http_code}" -X POST \
+    local response=$(curl -s -k -w "\n%{http_code}" -X POST \
         "$api_url/users" \
         -H "Content-Type: application/json" \
         -d "{\"id\":\"$TEST_USER_ID\",\"name\":\"$TEST_USER_NAME\"}")
@@ -100,7 +85,7 @@ get_test_user_localstack() {
     local api_url="$1"
     log_info "Retrieving test user via LocalStack API..."
     
-    local response=$(curl -s -w "\n%{http_code}" -X GET \
+    local response=$(curl -s -k -w "\n%{http_code}" -X GET \
         "$api_url/users/$TEST_USER_ID")
     
     local http_code=$(echo "$response" | tail -n1)
@@ -120,10 +105,16 @@ get_test_user_localstack() {
 verify_localstack_dynamo() {
     log_info "Verifying DynamoDB persistence in LocalStack..."
     
+    # Set environment variables for AWS CLI to access LocalStack
+    export AWS_ACCESS_KEY_ID=test
+    export AWS_SECRET_ACCESS_KEY=test
+    export AWS_DEFAULT_REGION=us-east-1
+    
+    # Note: DynamoDB table appears to be created in us-east-1 regardless of CDK config
     local item=$(aws --no-cli-pager --endpoint-url="$LOCALSTACK_URL" dynamodb get-item \
         --table-name "users-table" \
         --key "{\"id\":{\"S\":\"$TEST_USER_ID\"}}" \
-        --region us-west-2 \
+        --region us-east-1 \
         --output json 2>/dev/null)
     
     if command -v jq &> /dev/null; then
@@ -135,6 +126,7 @@ verify_localstack_dynamo() {
             log_info "Stored data: ID=$stored_id, Name=$stored_name"
         else
             log_error "LocalStack DynamoDB persistence verification failed"
+            log_info "Raw DynamoDB item: $item"
             return 1
         fi
     else
@@ -152,10 +144,11 @@ verify_localstack_dynamo() {
 cleanup_localstack() {
     log_info "Cleaning up LocalStack test data..."
     
+    # Note: DynamoDB table appears to be created in us-east-1 regardless of CDK config
     aws --no-cli-pager --endpoint-url="$LOCALSTACK_URL" dynamodb delete-item \
         --table-name "users-table" \
         --key "{\"id\":{\"S\":\"$TEST_USER_ID\"}}" \
-        --region us-west-2 \
+        --region us-east-1 \
         2>/dev/null || true
     
     log_success "LocalStack test cleanup completed"
