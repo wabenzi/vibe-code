@@ -37,8 +37,8 @@ log_error() {
 # Check if LocalStack is running
 check_localstack() {
     log_info "Checking LocalStack status..."
-    
-    if ! curl -s "$LOCALSTACK_URL/health" > /dev/null; then
+ 
+    if ! curl -s "$LOCALSTACK_URL/_localstack/health" > /dev/null; then
         log_error "LocalStack is not running or not accessible at $LOCALSTACK_URL"
         log_info "Start LocalStack with: npm run deploy:localstack"
         exit 1
@@ -62,7 +62,7 @@ create_test_user_localstack() {
     local api_url="$1"
     log_info "Creating test user via LocalStack API..."
     
-    local response=$(curl -s -k -w "\n%{http_code}" -X POST \
+    local response=$(curl -v -s -k -w "\n%{http_code}" -X POST \
         "$api_url/users" \
         -H "Content-Type: application/json" \
         -d "{\"id\":\"$TEST_USER_ID\",\"name\":\"$TEST_USER_NAME\"}")
