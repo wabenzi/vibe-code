@@ -86,8 +86,31 @@ deploy_infrastructure() {
 teardown_services() {
     log_info "Stopping and removing LocalStack services..."
     cd "${PROJECT_DIR}"
+    
+    # Stop and remove containers defined in docker-compose
     docker-compose down -v
-    log_success "Services stopped and volumes removed"
+    
+    # Clean up any orphaned LocalStack containers
+    log_info "Cleaning up any orphaned LocalStack containers..."
+    local orphaned_containers
+    orphaned_containers=$(docker ps -aq --filter "name=localstack" 2>/dev/null || true)
+    
+    if [[ -n "${orphaned_containers}" ]]; then
+        log_warning "Found orphaned LocalStack containers, removing them..."
+        # shellcheck disable=SC2086
+        docker rm -f ${orphaned_containers} 2>/dev/null || true
+    fi
+    
+    # Clean up orphaned networks
+    local orphaned_networks
+    orphaned_networks=$(docker network ls --filter "name=localstack" --format "{{.Name}}" 2>/dev/null | grep -v "^localstack-network$" || true)
+    
+    if [[ -n "${orphaned_networks}" ]]; then
+        log_warning "Found orphaned LocalStack networks, removing them..."
+        echo "${orphaned_networks}" | xargs -r docker network rm 2>/dev/null || true
+    fi
+    
+    log_success "Services stopped and cleanup completed"
 }
 
 # Show deployment information
@@ -147,20 +170,63 @@ case "${1:-deploy}" in
         else
             log_error "LocalStack is not accessible"
         fi
+        
+        # Check for orphaned containers
+        orphaned_containers=$(docker ps -aq --filter "name=localstack" 2>/dev/null | wc -l)
+        running_containers=$(docker ps -q --filter "name=localstack" 2>/dev/null | wc -l)
+        
+        if [[ $orphaned_containers -gt $running_containers ]]; then
+            log_warning "Found $((orphaned_containers - running_containers)) orphaned LocalStack container(s)"
+            echo "Run '$0 cleanup' to remove orphaned containers"
+        fi
+        ;;
+    "cleanup")
+        log_info "Cleaning up orphaned LocalStack containers and networks..."
+        
+        # Remove all LocalStack containers (running and stopped)
+        all_containers=$(docker ps -aq --filter "name=localstack" 2>/dev/null || true)
+        
+        if [[ -n "${all_containers}" ]]; then
+            log_info "Removing LocalStack containers..."
+            # shellcheck disable=SC2086
+            docker rm -f ${all_containers} 2>/dev/null || true
+            log_success "LocalStack containers removed"
+        else
+            log_info "No LocalStack containers found"
+        fi
+        
+        # Remove orphaned networks
+        localstack_networks=$(docker network ls --filter "name=localstack" --format "{{.Name}}" 2>/dev/null || true)
+        
+        if [[ -n "${localstack_networks}" ]]; then
+            log_info "Removing LocalStack networks..."
+            echo "${localstack_networks}" | xargs -r docker network rm 2>/dev/null || true
+            log_success "LocalStack networks removed"
+        else
+            log_info "No LocalStack networks found"
+        fi
+        
+        # Clean up unused volumes
+        log_info "Cleaning up unused Docker volumes..."
+        docker volume prune -f >/dev/null 2>&1 || true
+        
+        log_success "Cleanup completed!"
         ;;
     *)
-        echo "Usage: $0 {deploy|teardown|restart|status}"
+        echo "Usage: $0 {deploy|teardown|restart|status|cleanup}"
         echo ""
         echo "Commands:"
         echo "  deploy   - Deploy complete infrastructure to LocalStack"
         echo "  teardown - Destroy infrastructure and stop services"
         echo "  restart  - Teardown and redeploy everything"
-        echo "  status   - Check service status"
+        echo "  status   - Check service status and detect orphaned containers"
+        echo "  cleanup  - Remove all LocalStack containers, networks, and volumes"
         echo ""
         echo "Examples:"
         echo "  $0 deploy    # Full deployment"
         echo "  $0 teardown  # Complete cleanup"
         echo "  $0 status    # Check if services are running"
+        echo "  $0 cleanup   # Remove orphaned containers and networks"
         exit 1
         ;;
 esac
