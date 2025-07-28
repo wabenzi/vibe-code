@@ -5,10 +5,12 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
 
 # Source common logging functions
+# shellcheck disable=SC2034
 LOG_PREFIX="LOCALSTACK"
+# shellcheck disable=SC1091
 source "$(dirname "$0")/common-logging.sh"
 
 # Check if Docker is running
@@ -37,7 +39,7 @@ set_localstack_env() {
 # Start LocalStack services
 start_services() {
     log_info "Starting LocalStack services..."
-    cd "$PROJECT_DIR"
+    cd "${PROJECT_DIR}"
     docker-compose up -d
     
     # Wait for services to be ready
@@ -47,7 +49,7 @@ start_services() {
     # Check LocalStack health
     local attempts=0
     local max_attempts=30
-    while [ $attempts -lt $max_attempts ]; do
+    while [[ $attempts -lt $max_attempts ]]; do
         if curl -s http://localhost:4566/_localstack/health >/dev/null 2>&1; then
             log_success "LocalStack is ready"
             break
@@ -57,7 +59,7 @@ start_services() {
         sleep 2
     done
     
-    if [ $attempts -eq $max_attempts ]; then
+    if [[ $attempts -eq $max_attempts ]]; then
         log_error "LocalStack failed to start"
         exit 1
     fi
@@ -66,7 +68,7 @@ start_services() {
 # Bootstrap CDK for LocalStack
 bootstrap_cdk() {
     log_info "Bootstrapping CDK for LocalStack..."
-    cd "$PROJECT_DIR"
+    cd "${PROJECT_DIR}"
     npm run build
     npm run local:bootstrap
     log_success "CDK bootstrap completed"
@@ -75,7 +77,7 @@ bootstrap_cdk() {
 # Deploy infrastructure
 deploy_infrastructure() {
     log_info "Deploying infrastructure to LocalStack..."
-    cd "$PROJECT_DIR"
+    cd "${PROJECT_DIR}"
     npm run local:deploy
     log_success "Infrastructure deployed successfully"
 }
@@ -83,7 +85,7 @@ deploy_infrastructure() {
 # Stop and remove services
 teardown_services() {
     log_info "Stopping and removing LocalStack services..."
-    cd "$PROJECT_DIR"
+    cd "${PROJECT_DIR}"
     docker-compose down -v
     log_success "Services stopped and volumes removed"
 }
@@ -122,7 +124,7 @@ case "${1:-deploy}" in
         
         # Try to destroy CDK stack first
         log_info "Destroying CDK infrastructure..."
-        cd "$PROJECT_DIR"
+        cd "${PROJECT_DIR}"
         npm run local:destroy || log_warning "CDK destroy failed or stack doesn't exist"
         
         teardown_services
