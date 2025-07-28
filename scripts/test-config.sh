@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Deployment Testing Configuration
 
 # AWS Configuration

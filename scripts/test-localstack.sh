@@ -5,39 +5,19 @@
 
 set -e
 
+# Source common logging functions
+LOG_PREFIX="LOCALSTACK"
+source "$(dirname "$0")/common-logging.sh"
+
 # Configuration
 TEST_USER_ID="test-user-localstack-$(date +%s)"
 TEST_USER_NAME="Test User LocalStack"
 LOCALSTACK_URL="http://localhost:4566"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Logging functions
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
 # Check if LocalStack is running
 check_localstack() {
     log_info "Checking LocalStack status..."
- 
+
     if ! curl -s "$LOCALSTACK_URL/_localstack/health" > /dev/null; then
         log_error "LocalStack is not running or not accessible at $LOCALSTACK_URL"
         log_info "Start LocalStack with: npm run deploy:localstack"
@@ -62,13 +42,16 @@ create_test_user_localstack() {
     local api_url="$1"
     log_info "Creating test user via LocalStack API..."
     
-    local response=$(curl -v -s -k -w "\n%{http_code}" -X POST \
+    local response
+    response=$(curl -v -s -k -w "\n%{http_code}" -X POST \
         "$api_url/users" \
         -H "Content-Type: application/json" \
         -d "{\"id\":\"$TEST_USER_ID\",\"name\":\"$TEST_USER_NAME\"}")
     
-    local http_code=$(echo "$response" | tail -n1)
-    local body=$(echo "$response" | head -n -1)
+    local http_code
+    local body
+    http_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | head -n -1)
     
     if [ "$http_code" = "200" ] || [ "$http_code" = "201" ]; then
         log_success "User created successfully in LocalStack"
@@ -85,11 +68,14 @@ get_test_user_localstack() {
     local api_url="$1"
     log_info "Retrieving test user via LocalStack API..."
     
-    local response=$(curl -s -k -w "\n%{http_code}" -X GET \
+    local response
+    response=$(curl -s -k -w "\n%{http_code}" -X GET \
         "$api_url/users/$TEST_USER_ID")
     
-    local http_code=$(echo "$response" | tail -n1)
-    local body=$(echo "$response" | head -n -1)
+    local http_code
+    local body
+    http_code=$(echo "$response" | tail -n1)
+    body=$(echo "$response" | head -n -1)
     
     if [ "$http_code" = "200" ]; then
         log_success "User retrieved successfully from LocalStack"
@@ -111,15 +97,18 @@ verify_localstack_dynamo() {
     export AWS_DEFAULT_REGION=us-east-1
     
     # Note: DynamoDB table appears to be created in us-east-1 regardless of CDK config
-    local item=$(aws --no-cli-pager --endpoint-url="$LOCALSTACK_URL" dynamodb get-item \
+    local item
+    item=$(aws --no-cli-pager --endpoint-url="$LOCALSTACK_URL" dynamodb get-item \
         --table-name "users-table" \
         --key "{\"id\":{\"S\":\"$TEST_USER_ID\"}}" \
         --region us-east-1 \
         --output json 2>/dev/null)
     
     if command -v jq &> /dev/null; then
-        local stored_id=$(echo "$item" | jq -r '.Item.id.S // empty')
-        local stored_name=$(echo "$item" | jq -r '.Item.name.S // empty')
+        local stored_id
+        local stored_name
+        stored_id=$(echo "$item" | jq -r '.Item.id.S // empty')
+        stored_name=$(echo "$item" | jq -r '.Item.name.S // empty')
         
         if [ "$stored_id" = "$TEST_USER_ID" ] && [ "$stored_name" = "$TEST_USER_NAME" ]; then
             log_success "LocalStack DynamoDB persistence verification passed"
@@ -158,11 +147,12 @@ cleanup_localstack() {
 run_localstack_test() {
     log_info "Starting LocalStack Deployment Test"
     log_info "Test User ID: $TEST_USER_ID"
-    log_info "======================================="
+    log_separator
     
     check_localstack
     
-    local api_url=$(get_localstack_api_url)
+    local api_url
+    api_url=$(get_localstack_api_url)
     
     create_test_user_localstack "$api_url"
     get_test_user_localstack "$api_url"
@@ -170,8 +160,7 @@ run_localstack_test() {
     
     cleanup_localstack
     
-    log_success "======================================="
-    log_success "All LocalStack tests passed successfully!"
+    log_footer "All LocalStack tests passed successfully!"
 }
 
 # Handle script arguments

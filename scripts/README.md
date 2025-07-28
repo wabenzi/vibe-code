@@ -2,6 +2,54 @@
 
 This directory contains comprehensive deployment testing scripts for the AWS Serverless User API.
 
+## Common Logging Library
+
+All scripts use a common logging library (`common-logging.sh`) for consistent output formatting and better debugging.
+
+### Usage Example:
+```bash
+# Source the logging library with custom prefix
+LOG_PREFIX="AWS" source "$(dirname "$0")/common-logging.sh"
+
+# Use logging functions
+log_info "Starting operation"
+log_success "Operation completed"
+log_warning "Warning message"
+log_error "Error occurred"
+log_section "Section Header"
+log_debug "Debug information"  # Only shows when DEBUG=true
+
+# Utility functions for structured output
+log_header "Main Section Title"
+log_info "Content goes here"
+log_footer "Section completed successfully"
+```
+
+## Script Validation
+
+Use `validate-scripts.sh` to check all bash scripts for syntax errors and shellcheck issues:
+
+```bash
+# Basic validation
+./scripts/validate-scripts.sh
+
+# Verbose output showing each test
+./scripts/validate-scripts.sh --verbose
+
+# Fix permissions automatically
+./scripts/validate-scripts.sh --fix-permissions
+
+# Get help
+./scripts/validate-scripts.sh --help
+```
+
+### Validation Features:
+- ✅ **Syntax Check**: Validates bash syntax using `bash -n`
+- ✅ **Shellcheck Analysis**: Runs shellcheck for best practices and potential issues
+- ✅ **Permission Check**: Ensures scripts are executable
+- ✅ **Auto-fix**: Can automatically fix permission issues
+- ✅ **Comprehensive Reporting**: Detailed summary with statistics
+
 ## Test Scripts Overview
 
 ### 1. `test-deployment.sh` - AWS Deployment Testing
@@ -229,3 +277,65 @@ Test configuration is managed in `test-config.sh` and includes:
 - All test data is automatically removed after tests
 - No sensitive data is used in test operations
 - Tests use temporary, disposable test users only
+
+## Common Logging Library
+
+All scripts use a unified logging system provided by `common-logging.sh` for consistent output formatting and debugging.
+
+### Features
+
+- **Consistent Color Coding**: Different message types have distinct colors
+- **Customizable Prefixes**: Scripts can set custom prefixes (AWS, LOCALSTACK, etc.)
+- **Debug Support**: Optional debug logging that can be enabled with `DEBUG=true`
+- **Utility Functions**: Pre-built header, footer, and separator functions
+
+### Usage
+
+```bash
+# Source the library in your script
+source "$(dirname "$0")/common-logging.sh"
+
+# Basic logging
+log_info "Starting process..."
+log_success "Operation completed"
+log_warning "Configuration issue detected"
+log_error "Failed to connect"
+
+# Custom prefix (before sourcing)
+LOG_PREFIX="AWS" source "$(dirname "$0")/common-logging.sh"
+log_info "This shows [AWS] prefix"
+
+# Debug logging
+DEBUG=true log_debug "Debug information"
+
+# Structured output
+log_header "Deployment Process"
+log_info "Step 1: Checking dependencies"
+log_success "Dependencies verified"
+log_footer "Deployment completed successfully"
+```
+
+### Testing the Logging Library
+
+Run the comprehensive test script to see all logging functions in action:
+
+```bash
+./scripts/test-logging.sh
+```
+
+### Color Reference
+
+- **Blue [INFO/CUSTOM]** - General information messages
+- **Green [SUCCESS]** - Successful operations
+- **Yellow [WARNING]** - Warning messages
+- **Red [ERROR]** - Error messages
+- **Purple [SECTION]** - Section headers
+- **Cyan [DEBUG]** - Debug information (only when DEBUG=true)
+
+### Best Practices
+
+1. **Always source common-logging.sh** in new scripts for consistent output
+2. **Use appropriate log levels** (info, success, warning, error)
+3. **Set custom prefixes** for script-specific identification
+4. **Use structured output** with headers and footers for long operations
+5. **Enable debug logging** during development with `DEBUG=true`

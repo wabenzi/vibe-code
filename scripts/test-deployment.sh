@@ -13,37 +13,16 @@ set -e
 
 #set -x  # Enable debug mode
 
+# Source common logging functions
+source "$(dirname "$0")/common-logging.sh"
+
 # Configuration
 TEST_USER_ID="test-user-deployment-$(date +%s)"
 TEST_USER_NAME="Test User Deployment"
 STACK_NAME="UserApiStack"
 TABLE_NAME="users-table"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
 declare api_url
-
-# Logging functions
-log_info() {
-	echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-log_success() {
-	echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-log_warning() {
-	echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-log_error() {
-	echo -e "${RED}[ERROR]${NC} $1"
-}
 
 # Check if required tools are installed
 check_dependencies() {
@@ -301,7 +280,7 @@ check_stack_status() {
 run_deployment_test() {
 	log_info "Starting AWS Serverless API Deployment Test"
 	log_info "Test User ID: ${TEST_USER_ID}"
-	log_info "=========================================="
+	log_separator
 
 	# Check dependencies
 	check_dependencies || exit 1
@@ -332,9 +311,7 @@ run_deployment_test() {
 	# Clean up
 	final_cleanup
 
-	log_success "=========================================="
-	log_success "All deployment tests passed successfully!"
-	log_success "API is working correctly with DynamoDB persistence"
+	log_footer "All deployment tests passed successfully! API is working correctly with DynamoDB persistence"
 }
 
 # Handle script arguments

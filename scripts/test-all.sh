@@ -1,7 +1,14 @@
 #!/bin/bash
 
-# Comprehensive Deployment Test Runner
-# Runs deployment tests for both AWS and LocalStack environments
+#!/bin/bash
+
+# Comprehensive test script for AWS Serverless API
+# Tests both AWS and LocalStack deployments with performance measurements
+
+set -e
+
+# Source common logging functions
+source "$(dirname "$0")/common-logging.sh"
 
 set -e
 
