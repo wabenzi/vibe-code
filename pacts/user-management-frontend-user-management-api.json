@@ -5,6 +5,7 @@
   "interactions": [
     {
       "description": "a request to create a user",
+      "pending": false,
       "providerStates": [
         {
           "name": "user does not exist"
@@ -12,24 +13,36 @@
       ],
       "request": {
         "body": {
-          "id": "user-123",
-          "name": "John Doe"
+          "content": {
+            "id": "user-123",
+            "name": "John Doe"
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "method": "POST",
         "path": "/users"
       },
       "response": {
         "body": {
-          "createdAt": "2025-01-01T00:00:00.000Z",
-          "id": "user-123",
-          "name": "John Doe",
-          "updatedAt": "2025-01-01T00:00:00.000Z"
+          "content": {
+            "createdAt": "2025-01-01T00:00:00.000Z",
+            "id": "user-123",
+            "name": "John Doe",
+            "updatedAt": "2025-01-01T00:00:00.000Z"
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -56,10 +69,12 @@
           "status": {}
         },
         "status": 201
-      }
+      },
+      "type": "Synchronous/HTTP"
     },
     {
       "description": "a request to create a user that already exists",
+      "pending": false,
       "providerStates": [
         {
           "name": "user already exists"
@@ -67,27 +82,41 @@
       ],
       "request": {
         "body": {
-          "id": "existing-user",
-          "name": "Existing User"
+          "content": {
+            "id": "existing-user",
+            "name": "Existing User"
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "method": "POST",
         "path": "/users"
       },
       "response": {
         "body": {
-          "error": "User with this ID already exists"
+          "content": {
+            "error": "User with this ID already exists"
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "status": 409
-      }
+      },
+      "type": "Synchronous/HTTP"
     },
     {
       "description": "a request to create a user with invalid data",
+      "pending": false,
       "providerStates": [
         {
           "name": "user data is invalid"
@@ -95,25 +124,37 @@
       ],
       "request": {
         "body": {
-          "id": "",
-          "name": "John Doe"
+          "content": {
+            "id": "",
+            "name": "John Doe"
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "method": "POST",
         "path": "/users"
       },
       "response": {
         "body": {
-          "error": "Validation failed",
-          "errors": [
-            "id is required"
-          ],
-          "message": "Invalid input data"
+          "content": {
+            "error": "Validation failed",
+            "errors": [
+              "id is required"
+            ],
+            "message": "Invalid input data"
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -146,10 +187,12 @@
           "status": {}
         },
         "status": 400
-      }
+      },
+      "type": "Synchronous/HTTP"
     },
     {
       "description": "a request to get a non-existent user",
+      "pending": false,
       "providerStates": [
         {
           "name": "user does not exist"
@@ -161,12 +204,18 @@
       },
       "response": {
         "body": {
-          "error": "User not found",
-          "message": "User with ID 'non-existent-user' was not found",
-          "userId": "non-existent-user"
+          "content": {
+            "error": "User not found",
+            "message": "User with ID 'non-existent-user' was not found",
+            "userId": "non-existent-user"
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -183,10 +232,12 @@
           "status": {}
         },
         "status": 404
-      }
+      },
+      "type": "Synchronous/HTTP"
     },
     {
       "description": "a request to get a user",
+      "pending": false,
       "providerStates": [
         {
           "name": "user exists"
@@ -198,13 +249,19 @@
       },
       "response": {
         "body": {
-          "createdAt": "2025-01-01T00:00:00.000Z",
-          "id": "user-123",
-          "name": "John Doe",
-          "updatedAt": "2025-01-01T00:00:00.000Z"
+          "content": {
+            "createdAt": "2025-01-01T00:00:00.000Z",
+            "id": "user-123",
+            "name": "John Doe",
+            "updatedAt": "2025-01-01T00:00:00.000Z"
+          },
+          "contentType": "application/json",
+          "encoded": false
         },
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": [
+            "application/json"
+          ]
         },
         "matchingRules": {
           "body": {
@@ -231,7 +288,8 @@
           "status": {}
         },
         "status": 200
-      }
+      },
+      "type": "Synchronous/HTTP"
     }
   ],
   "metadata": {
@@ -243,7 +301,7 @@
       "models": "1.2.3"
     },
     "pactSpecification": {
-      "version": "3.0.0"
+      "version": "4.0"
     }
   },
   "provider": {

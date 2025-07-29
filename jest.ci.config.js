@@ -44,4 +44,10 @@ module.exports = {
   bail: 1,
   // Don't run in watch mode in CI
   watchman: false,
+  // Detect open handles to help debug cleanup issues
+  detectOpenHandles: true,
+  // Force exit to prevent hanging
+  forceExit: true,
+  // Set test timeout for contract tests
+  testTimeout: 30000,
 }

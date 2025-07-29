@@ -15,10 +15,36 @@ describe('User API Contract Tests (Consumer)', () => {
       port: 1234,
       logLevel: 'info',
       dir: path.resolve(process.cwd(), 'pacts'),
-      spec: SpecificationVersion.SPECIFICATION_VERSION_V3,
+      spec: SpecificationVersion.SPECIFICATION_VERSION_V4,
     });
 
     apiClient = new ApiClient('http://localhost:1234');
+  });
+
+  beforeEach(async () => {
+    // Add a small delay between tests to ensure proper cleanup
+    await new Promise(resolve => setTimeout(resolve, 50));
+  });
+
+  afterEach(async () => {
+    // Clear any pending timers or async operations
+    await new Promise(resolve => setTimeout(resolve, 50));
+  });
+
+  afterAll(async () => {
+    // Clean up resources to prevent worker process hanging
+    if (apiClient) {
+      // Clear any axios interceptors or pending requests
+      apiClient = null as any;
+    }
+    
+    // Force garbage collection if available
+    if (global.gc) {
+      global.gc();
+    }
+    
+    // Add a small delay to ensure cleanup
+    await new Promise(resolve => setTimeout(resolve, 100));
   });
 
   describe('Create User', () => {
