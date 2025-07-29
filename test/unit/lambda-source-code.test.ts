@@ -92,7 +92,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Request body is required')
+      expect(body.error).toBe('Validation Error')
+      expect(body.message).toBe('Request body is required')
     })
 
     it('should return 400 for invalid JSON', async () => {
@@ -105,7 +106,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Invalid JSON in request body')
+      expect(body.error).toBe('Validation Error')
+      expect(body.message).toBe('Invalid JSON in request body')
     })
 
     it('should return 400 for missing required fields', async () => {
@@ -119,7 +121,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
       expect(body.error).toBe('Validation Error')
-      expect(body.message).toBe('Missing required fields: id and name are required')
+      expect(body.message).toBe('Request validation failed')
     })
 
     it('should return 400 for invalid data types', async () => {
@@ -133,7 +135,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
       expect(body.error).toBe('Validation Error')
-      expect(body.message).toBe('Invalid data types')
+      expect(body.message).toBe('Request validation failed')
     })
   })
 

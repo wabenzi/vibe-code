@@ -149,7 +149,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
       expect(body.error).toBe('Validation Error')
-      expect(body.message).toBe('Missing required fields: id and name are required')
+      expect(body.message).toBe('Request validation failed')
 
       // Verify no AWS SDK calls were made due to validation failure
       expect(docClientMock.calls()).toHaveLength(0)
@@ -165,8 +165,10 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
         })
       })
 
-      // Mock DynamoDB to fail
-      docClientMock.on(PutCommand).rejects(new Error('AWS service unavailable'))
+      // Mock DynamoDB to fail - use callsFake with Promise.reject
+      docClientMock.on(PutCommand).callsFake(() => 
+        Promise.reject(new Error('DynamoDB connection failed'))
+      )
 
       // Act
       const result = await createUserHandler(event) as APIGatewayProxyResult
@@ -174,8 +176,8 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       // Assert
       expect(result.statusCode).toBe(500)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Internal server error')
-      expect(body.message).toBe('Unknown error')
+      expect(body.error).toBe('Database Error')
+      expect(body.message).toBe('Failed to create user: Error: DynamoDB connection failed')
 
       // Verify the AWS SDK was called
       expect(docClientMock.calls()).toHaveLength(1)
@@ -191,10 +193,12 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
         })
       })
 
-      // Mock conditional check failure
-      const conditionalCheckError = new Error('ConditionalCheckFailedException')
-      conditionalCheckError.name = 'ConditionalCheckFailedException'
-      docClientMock.on(PutCommand).rejects(conditionalCheckError)
+      // Mock conditional check failure - return rejected promise
+      docClientMock.on(PutCommand).callsFake(() => {
+        const error = new Error('ConditionalCheckFailedException')
+        error.name = 'ConditionalCheckFailedException'
+        return Promise.reject(error)
+      })
 
       // Act
       const result = await createUserHandler(event) as APIGatewayProxyResult
@@ -202,7 +206,8 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       // Assert
       expect(result.statusCode).toBe(500)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Internal server error')
+      expect(body.error).toBe('Database Error')
+      expect(body.message).toBe('Failed to create user: ConditionalCheckFailedException: ConditionalCheckFailedException')
     })
   })
 

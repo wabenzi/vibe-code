@@ -73,13 +73,14 @@ export const DynamoUserRepository: UserRepository = {
             ConditionExpression: 'attribute_not_exists(id)', // Prevent overwriting existing users
           }))
         )
-        return user
       } catch (error) {
-        return yield* new DynamoUserRepositoryError({
+        yield* Effect.fail(new DynamoUserRepositoryError({
           message: `Failed to create user: ${error}`,
           cause: error,
-        })
+        }))
       }
+      
+      return user
     }),
 
   findById: (id: string) =>
