@@ -1,4 +1,5 @@
 import { APIGatewayProxyResult } from 'aws-lambda'
+import { Effect } from 'effect'
 import { ValidationError, UserNotFoundError, DatabaseError } from '../../domain/user'
 import { DynamoUserRepositoryError } from '../../infrastructure/dynamo-user-repository'
 import { ApiResponse } from '../types/api-response'
@@ -7,37 +8,103 @@ import { ApiResponse } from '../types/api-response'
 export const handleError = (error: unknown): APIGatewayProxyResult => {
   // Handle ValidationError
   if (error instanceof ValidationError) {
-    // For validation errors, return bad request with the error message
-    return ApiResponse.badRequest(error.message)
+    // Log validation error details for debugging using Effect
+    Effect.runSync(
+      Effect.logError('Validation Error:', {
+        message: error.message,
+        errors: error.errors,
+        timestamp: new Date().toISOString()
+      })
+    )
+    
+    // Return standard "Bad Request" with specific message and error details
+    return ApiResponse.badRequest(error.message, error.errors)
   }
   
   // Handle UserNotFoundError
   if (error instanceof UserNotFoundError) {
-    return ApiResponse.notFound('User not found', error.message)
+    // Log user not found for debugging using Effect
+    Effect.runSync(
+      Effect.logInfo('User Not Found:', {
+        message: error.message,
+        userId: error.userId,
+        timestamp: new Date().toISOString()
+      })
+    )
+    
+    return ApiResponse.notFound(error.message, { userId: error.userId })
   }
   
   // Handle DynamoUserRepositoryError  
   if (error instanceof DynamoUserRepositoryError) {
-    return ApiResponse.databaseError(error.message)
+    // Log detailed database error for debugging using Effect
+    Effect.runSync(
+      Effect.logError('DynamoDB Repository Error:', {
+        message: error.message,
+        cause: error.cause,
+        timestamp: new Date().toISOString(),
+        stack: error.cause instanceof Error ? error.cause.stack : undefined
+      })
+    )
+    
+    // Return standard "Internal Server Error" with specific message and detailed error info
+    return ApiResponse.internalServerError('Database operation failed', {
+      type: 'DynamoUserRepositoryError',
+      details: error.message,
+      cause: error.cause instanceof Error ? error.cause.message : String(error.cause)
+    })
   }
   
   // Handle DatabaseError
   if (error instanceof DatabaseError) {
-    return ApiResponse.databaseError(error.message)
+    // Log detailed database error for debugging using Effect
+    Effect.runSync(
+      Effect.logError('Database Error:', {
+        message: error.message,
+        cause: error.cause,
+        timestamp: new Date().toISOString()
+      })
+    )
+    
+    // Return standard "Internal Server Error" with specific message and detailed error info
+    return ApiResponse.internalServerError('Database operation failed', {
+      type: 'DatabaseError',
+      details: error.message,
+      cause: error.cause instanceof Error ? error.cause.message : String(error.cause)
+    })
   }
   
   // Handle generic errors
-  return ApiResponse.internalServerError(
-    'Internal server error',
-    error instanceof Error ? error.message : 'Unknown error'
+  Effect.runSync(
+    Effect.logError('Unhandled Error:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    })
   )
+  
+  return ApiResponse.internalServerError('An unexpected error occurred', {
+    type: 'UnknownError',
+    details: error instanceof Error ? error.message : 'Unknown error',
+    stack: error instanceof Error ? error.stack : undefined
+  })
 }
 
-// Specialized error handler for create user (includes validation error details)
+// Specialized error handler for create user
 export const handleCreateUserError = (error: unknown): APIGatewayProxyResult => {
-  // Handle ValidationError with detailed error information
+  // Handle ValidationError with enhanced details for create user operations
   if (error instanceof ValidationError) {
-    return ApiResponse.validationError(error.message, error.errors)
+    // Log validation error details for debugging using Effect
+    Effect.runSync(
+      Effect.logError('Create User Validation Error:', {
+        message: error.message,
+        errors: error.errors,
+        timestamp: new Date().toISOString()
+      })
+    )
+    
+    // Return standard "Bad Request" with specific message and error details
+    return ApiResponse.badRequest(error.message, error.errors)
   }
   
   // For other errors, use the standard handler

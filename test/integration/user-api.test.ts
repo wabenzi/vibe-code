@@ -126,7 +126,7 @@ describe('User API Integration Tests', () => {
         const axiosError = error as AxiosError;
         expect(axiosError.response?.status).toBe(404);
         expect(axiosError.response?.data).toHaveProperty('error');
-        expect(axiosError.response?.data).toHaveProperty('userId', nonExistentId);
+        expect(axiosError.response?.data).toHaveProperty('details.userId', nonExistentId);
       }
     });
 

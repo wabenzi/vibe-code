@@ -337,7 +337,13 @@ describe('Comprehensive AWS DynamoDB Error Testing', () => {
         // Assert
         expect(result.statusCode).toBe(500)
         const body = JSON.parse(result.body)
-        expect(body.error).toBe('Internal server error')
+        expect(body.error).toBe('Internal Server Error')
+        expect(body.message).toBe('Database operation failed')
+        expect(body.details).toEqual({
+          type: 'DynamoUserRepositoryError',
+          details: expect.stringContaining('Failed to create user:'),
+          cause: expect.any(String)
+        })
         
         expect(docClientMock.calls()).toHaveLength(1)
       })
@@ -362,7 +368,13 @@ describe('Comprehensive AWS DynamoDB Error Testing', () => {
         // Assert
         expect(result.statusCode).toBe(500)
         const body = JSON.parse(result.body)
-        expect(body.error).toBe('Internal server error')
+        expect(body.error).toBe('Internal Server Error')
+        expect(body.message).toBe('Database operation failed')
+        expect(body.details).toEqual({
+          type: 'DynamoUserRepositoryError',
+          details: expect.stringContaining('Failed to find user by id'),
+          cause: expect.any(String)
+        })
         
         expect(docClientMock.calls()).toHaveLength(1)
       })
@@ -386,7 +398,13 @@ describe('Comprehensive AWS DynamoDB Error Testing', () => {
         // Assert
         expect(result.statusCode).toBe(500)
         const body = JSON.parse(result.body)
-        expect(body.error).toBe('Internal server error')
+        expect(body.error).toBe('Internal Server Error')
+        expect(body.message).toBe('Database operation failed')
+        expect(body.details).toEqual({
+          type: 'DynamoUserRepositoryError',
+          details: expect.stringContaining('Failed to find user by id'),
+          cause: expect.any(String)
+        })
         
         expect(docClientMock.calls()).toHaveLength(1)
       })

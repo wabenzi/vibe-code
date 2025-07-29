@@ -124,6 +124,6 @@ export function getApiUrl(): string {
     return 'https://j20a33ppkl.execute-api.us-west-2.amazonaws.com/prod'
   }
   
-  // For LocalStack (default)
-  return 'https://xaa4um649v.execute-api.localhost.localstack.cloud:4566/local'
+  // For LocalStack - use the currently deployed API Gateway URL
+  return 'https://sx65uzlpv3.execute-api.localhost.localstack.cloud:4566/prod/'
 }

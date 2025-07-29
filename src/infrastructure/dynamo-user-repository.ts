@@ -49,85 +49,80 @@ export interface UserRepository {
 }
 
 export const DynamoUserRepository: UserRepository = {
-  create: (request: CreateUserRequest) =>
-    Effect.gen(function* () {
-      const now = new Date()
-      const user = new User({
-        id: request.id,
-        name: request.name,
-        createdAt: now,
-        updatedAt: now,
-      })
+  create: (request: CreateUserRequest) => {
+    const now = new Date()
+    const user = new User({
+      id: request.id,
+      name: request.name,
+      createdAt: now,
+      updatedAt: now,
+    })
 
-      try {
-        yield* Effect.promise(() =>
-          /* istanbul ignore next */
-          docClient.send(new PutCommand({
-            TableName: TABLE_NAME,
-            Item: {
-              id: user.id,
-              name: user.name,
-              createdAt: user.createdAt.toISOString(),
-              updatedAt: user.updatedAt.toISOString(),
-            },
-            ConditionExpression: 'attribute_not_exists(id)', // Prevent overwriting existing users
-          }))
-        )
-      } catch (error) {
-        yield* Effect.fail(new DynamoUserRepositoryError({
-          message: `Failed to create user: ${error}`,
-          cause: error,
-        }))
-      }
-      
-      return user
-    }),
+    return Effect.tryPromise({
+      try: () =>
+        /* istanbul ignore next */
+        docClient.send(new PutCommand({
+          TableName: TABLE_NAME,
+          Item: {
+            id: user.id,
+            name: user.name,
+            createdAt: user.createdAt.toISOString(),
+            updatedAt: user.updatedAt.toISOString(),
+          },
+          ConditionExpression: 'attribute_not_exists(id)', // Prevent overwriting existing users
+        })),
+      catch: (error) => new DynamoUserRepositoryError({
+        message: `Failed to create user: ${error}`,
+        cause: error,
+      })
+    }).pipe(
+      Effect.map(() => user)
+    )
+  },
 
   findById: (id: string) =>
-    Effect.gen(function* () {
-      try {
-        const result = yield* Effect.promise(() =>
-          /* istanbul ignore next */
-          docClient.send(new GetCommand({
-            TableName: TABLE_NAME,
-            Key: { id },
-          }))
-        )
-
-        if (!result.Item) {
-          return yield* new UserNotFoundError({ 
-            message: `User with id ${id} not found`,
-            userId: id 
-          })
-        }
-
-        return new User({
-          id: result.Item.id,
-          name: result.Item.name,
-          createdAt: new Date(result.Item.createdAt),
-          updatedAt: new Date(result.Item.updatedAt),
-        })
-      } catch (error) {
-        return yield* new DynamoUserRepositoryError({
-          message: `Failed to find user by id ${id}: ${error}`,
-          cause: error,
-        })
-      }
-    }),
+    Effect.tryPromise({
+      try: () =>
+        /* istanbul ignore next */
+        docClient.send(new GetCommand({
+          TableName: TABLE_NAME,
+          Key: { id },
+        })),
+      catch: (error) => new DynamoUserRepositoryError({
+        message: `Failed to find user by id ${id}: ${error}`,
+        cause: error,
+      })
+    }).pipe(
+      Effect.flatMap((result) =>
+        !result.Item
+          ? Effect.fail(new UserNotFoundError({ 
+              message: `User with id ${id} not found`,
+              userId: id 
+            }))
+          : Effect.succeed(new User({
+              id: result.Item.id,
+              name: result.Item.name,
+              createdAt: new Date(result.Item.createdAt),
+              updatedAt: new Date(result.Item.updatedAt),
+            }))
+      )
+    ),
 
   findAll: () =>
-    Effect.gen(function* () {
-      try {
+    Effect.tryPromise({
+      try: () =>
         /* istanbul ignore next */
-        const result = yield* Effect.promise(() =>
-          /* istanbul ignore next */
-          docClient.send(new ScanCommand({
-            TableName: TABLE_NAME,
-          }))
-        )
-
+        docClient.send(new ScanCommand({
+          TableName: TABLE_NAME,
+        })),
+      catch: (error) => new DynamoUserRepositoryError({
+        message: `Failed to find all users: ${error}`,
+        cause: error,
+      })
+    }).pipe(
+      Effect.map((result) =>
         /* istanbul ignore next */
-        const users = (result.Items || []).map(item => 
+        (result.Items || []).map(item => 
           new User({
             id: item.id,
             name: item.name,
@@ -135,45 +130,26 @@ export const DynamoUserRepository: UserRepository = {
             updatedAt: new Date(item.updatedAt),
           })
         )
-
-        /* istanbul ignore next */
-        return users
-      } catch (error) {
-        /* istanbul ignore next */
-        return yield* new DynamoUserRepositoryError({
-          message: `Failed to find all users: ${error}`,
-          cause: error,
-        })
-      }
-    }),
+      )
+    ),
 
   deleteById: (id: string) =>
-    Effect.gen(function* () {
-      try {
-        // First check if user exists
-        /* istanbul ignore next */
-        yield* DynamoUserRepository.findById(id)
-        
-        // If we get here, user exists, so delete it
-        /* istanbul ignore next */
-        yield* Effect.promise(() =>
-          /* istanbul ignore next */
-          docClient.send(new DeleteCommand({
-            TableName: TABLE_NAME,
-            Key: { id },
-          }))
+    DynamoUserRepository.findById(id).pipe(
+      Effect.flatMap(() =>
+        Effect.tryPromise({
+          try: () =>
+            /* istanbul ignore next */
+            docClient.send(new DeleteCommand({
+              TableName: TABLE_NAME,
+              Key: { id },
+            })),
+          catch: (error) => new DynamoUserRepositoryError({
+            message: `Failed to delete user by id ${id}: ${error}`,
+            cause: error,
+          })
+        }).pipe(
+          Effect.map(() => void 0)
         )
-      } catch (error) {
-        /* istanbul ignore next */
-        if (error instanceof UserNotFoundError) {
-          /* istanbul ignore next */
-          return yield* error
-        }
-        /* istanbul ignore next */
-        return yield* new DynamoUserRepositoryError({
-          message: `Failed to delete user by id ${id}: ${error}`,
-          cause: error,
-        })
-      }
-    }),
+      )
+    ),
 }

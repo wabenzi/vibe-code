@@ -77,7 +77,8 @@ export class UserApiStack extends cdk.Stack {
         LOG_LEVEL: isLocalStack ? 'DEBUG' : 'INFO',
         DYNAMODB_TABLE_NAME: usersTable.tableName,
         ...(isLocalStack && {
-          AWS_ENDPOINT_URL: 'http://localhost:4566',
+          AWS_ENDPOINT_URL: 'http://host.docker.internal:4566',
+          DYNAMODB_ENDPOINT: 'http://host.docker.internal:4566',
         }),
       },
       timeout: cdk.Duration.seconds(30),
@@ -104,7 +105,8 @@ export class UserApiStack extends cdk.Stack {
         LOG_LEVEL: isLocalStack ? 'DEBUG' : 'INFO',
         DYNAMODB_TABLE_NAME: usersTable.tableName,
         ...(isLocalStack && {
-          AWS_ENDPOINT_URL: 'http://localhost:4566',
+          AWS_ENDPOINT_URL: 'http://host.docker.internal:4566',
+          DYNAMODB_ENDPOINT: 'http://host.docker.internal:4566',
         }),
       },
       timeout: cdk.Duration.seconds(30),
@@ -131,7 +133,8 @@ export class UserApiStack extends cdk.Stack {
         LOG_LEVEL: isLocalStack ? 'DEBUG' : 'INFO',
         DYNAMODB_TABLE_NAME: usersTable.tableName,
         ...(isLocalStack && {
-          AWS_ENDPOINT_URL: 'http://localhost:4566',
+          AWS_ENDPOINT_URL: 'http://host.docker.internal:4566',
+          DYNAMODB_ENDPOINT: 'http://host.docker.internal:4566',
         }),
       },
       timeout: cdk.Duration.seconds(30),

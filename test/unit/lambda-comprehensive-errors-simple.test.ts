@@ -53,8 +53,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
       expect(docClientMock.calls()).toHaveLength(1)
     })
@@ -86,8 +90,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
       expect(docClientMock.calls()).toHaveLength(1)
     })
@@ -122,8 +130,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
       expect(docClientMock.calls()).toHaveLength(1)
     })
@@ -158,8 +170,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
       expect(docClientMock.calls()).toHaveLength(1)
     })
@@ -194,8 +210,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
       expect(docClientMock.calls()).toHaveLength(1)
     })
@@ -227,8 +247,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
       expect(docClientMock.calls()).toHaveLength(1)
     })
@@ -260,8 +284,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
       expect(docClientMock.calls()).toHaveLength(1)
     })
@@ -293,8 +321,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
       expect(docClientMock.calls()).toHaveLength(1)
     })
@@ -321,7 +353,9 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(400)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Request body is required'
+        error: 'Bad Request',
+        message: 'Request body is required',
+        details: ['Request body cannot be empty']
       })
       expect(docClientMock.calls()).toHaveLength(0)
     })
@@ -346,7 +380,9 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(400)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Invalid JSON in request body'
+        error: 'Bad Request',
+        message: 'Invalid JSON in request body',
+        details: ['Body must be valid JSON']
       })
       expect(docClientMock.calls()).toHaveLength(0)
     })
@@ -374,12 +410,11 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(400)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Validation Error',
-        message: 'Missing required fields: id and name are required',
-        details: {
-          id: 'id is required',
-          name: null
-        }
+        error: 'Bad Request',
+        message: 'Request validation failed',
+        details: expect.arrayContaining([
+          expect.stringContaining('is missing')
+        ])
       })
       expect(docClientMock.calls()).toHaveLength(0)
     })
@@ -404,7 +439,9 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(400)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'User ID is required'
+        error: 'Bad Request',
+        message: 'User ID is required',
+        details: ['User ID parameter is missing']
       })
       expect(docClientMock.calls()).toHaveLength(0)
     })
@@ -436,8 +473,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
 
       // Restore the environment variable
@@ -477,8 +518,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(createResult.statusCode).toBe(500)
       expect(JSON.parse(createResult.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
 
       // Reset mock for second operation
@@ -511,8 +556,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(getResult.statusCode).toBe(500)
       expect(JSON.parse(getResult.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
     })
 
@@ -537,7 +586,9 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(invalidResult.statusCode).toBe(400)
       expect(JSON.parse(invalidResult.body)).toEqual({
-        error: 'Request body is required'
+        error: 'Bad Request',
+        message: 'Request body is required',
+        details: ['Request body cannot be empty']
       })
 
       // Then test DynamoDB error with valid input
@@ -570,8 +621,12 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(dbResult.statusCode).toBe(500)
       expect(JSON.parse(dbResult.body)).toEqual({
-        error: 'Internal server error',
-        message: 'Unknown error'
+        error: 'Internal Server Error',
+        message: 'Database operation failed',
+        details: expect.objectContaining({
+          type: expect.stringContaining('Error'),
+          details: expect.any(String)
+        })
       })
     })
   })

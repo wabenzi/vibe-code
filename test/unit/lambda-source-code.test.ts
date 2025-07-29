@@ -92,7 +92,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Validation Error')
+      expect(body.error).toBe('Bad Request')
       expect(body.message).toBe('Request body is required')
     })
 
@@ -106,7 +106,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Validation Error')
+      expect(body.error).toBe('Bad Request')
       expect(body.message).toBe('Invalid JSON in request body')
     })
 
@@ -120,7 +120,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Validation Error')
+      expect(body.error).toBe('Bad Request')
       expect(body.message).toBe('Request validation failed')
     })
 
@@ -134,7 +134,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Validation Error')
+      expect(body.error).toBe('Bad Request')
       expect(body.message).toBe('Request validation failed')
     })
   })
@@ -154,7 +154,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('User ID is required')
+      expect(body.error).toBe('Bad Request')
+      expect(body.message).toBe('User ID is required')
     })
 
     it('should return 400 for invalid user ID format', async () => {
@@ -167,7 +168,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Invalid user ID format')
+      expect(body.error).toBe('Bad Request')
+      expect(body.message).toBe('Invalid user ID format')
     })
   })
 
@@ -186,7 +188,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('User ID is required')
+      expect(body.error).toBe('Bad Request')
+      expect(body.message).toBe('User ID is required')
     })
 
     it('should return 400 for invalid user ID format', async () => {
@@ -199,7 +202,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Invalid user ID format')
+      expect(body.error).toBe('Bad Request')
+      expect(body.message).toBe('Invalid user ID format')
     })
   })
 })

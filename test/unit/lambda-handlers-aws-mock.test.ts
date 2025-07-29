@@ -148,8 +148,9 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       // Assert
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Validation Error')
+      expect(body.error).toBe('Bad Request')
       expect(body.message).toBe('Request validation failed')
+      expect(body.details).toEqual(expect.arrayContaining([expect.stringContaining('Expected a non empty string')]))
 
       // Verify no AWS SDK calls were made due to validation failure
       expect(docClientMock.calls()).toHaveLength(0)
@@ -165,10 +166,8 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
         })
       })
 
-      // Mock DynamoDB to fail - use callsFake with Promise.reject
-      docClientMock.on(PutCommand).callsFake(() => 
-        Promise.reject(new Error('DynamoDB connection failed'))
-      )
+      // Mock DynamoDB to fail - use rejects method
+      docClientMock.on(PutCommand).rejects(new Error('DynamoDB connection failed'))
 
       // Act
       const result = await createUserHandler(event) as APIGatewayProxyResult
@@ -176,8 +175,13 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       // Assert
       expect(result.statusCode).toBe(500)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Database Error')
-      expect(body.message).toBe('Failed to create user: Error: DynamoDB connection failed')
+      expect(body.error).toBe('Internal Server Error')
+      expect(body.message).toBe('Database operation failed')
+      expect(body.details).toEqual({
+        type: 'DynamoUserRepositoryError',
+        details: 'Failed to create user: Error: DynamoDB connection failed',
+        cause: 'DynamoDB connection failed'
+      })
 
       // Verify the AWS SDK was called
       expect(docClientMock.calls()).toHaveLength(1)
@@ -193,12 +197,10 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
         })
       })
 
-      // Mock conditional check failure - return rejected promise
-      docClientMock.on(PutCommand).callsFake(() => {
-        const error = new Error('ConditionalCheckFailedException')
-        error.name = 'ConditionalCheckFailedException'
-        return Promise.reject(error)
-      })
+      // Mock conditional check failure - use rejects method
+      const conditionalCheckError = new Error('ConditionalCheckFailedException')
+      conditionalCheckError.name = 'ConditionalCheckFailedException'
+      docClientMock.on(PutCommand).rejects(conditionalCheckError)
 
       // Act
       const result = await createUserHandler(event) as APIGatewayProxyResult
@@ -206,8 +208,13 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       // Assert
       expect(result.statusCode).toBe(500)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Database Error')
-      expect(body.message).toBe('Failed to create user: ConditionalCheckFailedException: ConditionalCheckFailedException')
+      expect(body.error).toBe('Internal Server Error')
+      expect(body.message).toBe('Database operation failed')
+      expect(body.details).toEqual({
+        type: 'DynamoUserRepositoryError',
+        details: 'Failed to create user: ConditionalCheckFailedException: ConditionalCheckFailedException',
+        cause: 'ConditionalCheckFailedException'
+      })
     })
   })
 
@@ -266,8 +273,9 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       // Assert
       expect(result.statusCode).toBe(404)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('User not found')
+      expect(body.error).toBe('Not Found')
       expect(body.message).toContain('User with id non-existent-user not found')
+      expect(body.details).toEqual({ userId: 'non-existent-user' })
 
       // Verify the AWS SDK was called
       expect(docClientMock.calls()).toHaveLength(1)
@@ -286,8 +294,9 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       // Assert
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('User ID is required')
-      // No message field to check since error is the message
+      expect(body.error).toBe('Bad Request')
+      expect(body.message).toBe('User ID is required')
+      expect(body.details).toEqual(['User ID parameter is missing'])
 
       // Verify no AWS SDK calls were made
       expect(docClientMock.calls()).toHaveLength(0)
@@ -352,8 +361,9 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       // Assert
       expect(result.statusCode).toBe(404)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('User not found')
+      expect(body.error).toBe('Not Found')
       expect(body.message).toContain('User with id non-existent-delete-user not found')
+      expect(body.details).toEqual({ userId: 'non-existent-delete-user' })
 
       // Verify only findById was called, not delete
       expect(docClientMock.calls()).toHaveLength(1)
@@ -372,8 +382,9 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       // Assert
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('User ID is required')
-      // No message field to check since error is the message
+      expect(body.error).toBe('Bad Request')
+      expect(body.message).toBe('User ID is required')
+      expect(body.details).toEqual(['User ID parameter is missing'])
 
       // Verify no AWS SDK calls were made
       expect(docClientMock.calls()).toHaveLength(0)

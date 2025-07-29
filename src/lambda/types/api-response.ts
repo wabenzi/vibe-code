@@ -35,6 +35,22 @@ export const HttpStatus = {
 } as const
 
 /**
+ * Standard HTTP status code names/descriptions
+ */
+export const HttpStatusName = {
+  200: 'OK',
+  201: 'Created',
+  204: 'No Content',
+  400: 'Bad Request',
+  401: 'Unauthorized',
+  403: 'Forbidden',
+  404: 'Not Found',
+  409: 'Conflict',
+  500: 'Internal Server Error',
+  503: 'Service Unavailable',
+} as const
+
+/**
  * Standard headers for API responses
  */
 const DEFAULT_HEADERS = {
@@ -49,14 +65,19 @@ const DEFAULT_HEADERS = {
  */
 export function createErrorResponse(
   statusCode: number,
-  error: string,
   message?: string,
   details?: Record<string, any> | string[]
 ): APIGatewayProxyResult {
+  // Check if we should suppress error details for production security
+  const suppressDetails = process.env.SUPPRESS_ERROR_DETAILS === 'true'
+  
+  // Look up the standard HTTP status description
+  const error = HttpStatusName[statusCode as keyof typeof HttpStatusName] || 'Unknown Error'
+  
   const body: ErrorResponseBody = {
     error,
     ...(message && { message }),
-    ...(details && { details }),
+    ...(details && !suppressDetails && { details }),
   }
 
   return {
@@ -100,33 +121,32 @@ export const ApiResponse = {
   noContent: () => 
     createSuccessResponse(HttpStatus.NO_CONTENT),
 
-  // Error responses
-  badRequest: (error: string, message?: string, details?: Record<string, any> | string[]) =>
-    createErrorResponse(HttpStatus.BAD_REQUEST, error, message, details),
+  // Error responses with standard HTTP status messages
+  badRequest: (message?: string, details?: Record<string, any> | string[]) =>
+    createErrorResponse(HttpStatus.BAD_REQUEST, message, details),
   
-  unauthorized: (error: string = 'Unauthorized', message?: string) =>
-    createErrorResponse(HttpStatus.UNAUTHORIZED, error, message),
+  unauthorized: (message?: string, details?: Record<string, any> | string[]) =>
+    createErrorResponse(HttpStatus.UNAUTHORIZED, message, details),
   
-  forbidden: (error: string = 'Forbidden', message?: string) =>
-    createErrorResponse(HttpStatus.FORBIDDEN, error, message),
+  forbidden: (message?: string, details?: Record<string, any> | string[]) =>
+    createErrorResponse(HttpStatus.FORBIDDEN, message, details),
   
-  notFound: (error: string = 'Not Found', message?: string) =>
-    createErrorResponse(HttpStatus.NOT_FOUND, error, message),
+  notFound: (message?: string, details?: Record<string, any> | string[]) =>
+    createErrorResponse(HttpStatus.NOT_FOUND, message, details),
   
-  conflict: (error: string = 'Conflict', message?: string, details?: Record<string, any>) =>
-    createErrorResponse(HttpStatus.CONFLICT, error, message, details),
+  conflict: (message?: string, details?: Record<string, any> | string[]) =>
+    createErrorResponse(HttpStatus.CONFLICT, message, details),
   
-  internalServerError: (error: string = 'Internal Server Error', message?: string) =>
-    createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, error, message),
+  internalServerError: (message?: string, details?: Record<string, any> | string[]) =>
+    createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, message, details),
   
-  serviceUnavailable: (error: string = 'Service Unavailable', message?: string) =>
-    createErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, error, message),
+  serviceUnavailable: (message?: string, details?: Record<string, any> | string[]) =>
+    createErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, message, details),
 
-  // Validation error helper
+  // Deprecated helpers - use standard methods above
   validationError: (message: string, details: Record<string, any> | string[]) =>
-    createErrorResponse(HttpStatus.BAD_REQUEST, 'Validation Error', message, details),
+    createErrorResponse(HttpStatus.BAD_REQUEST, message, details),
 
-  // Database error helper
-  databaseError: (message?: string) =>
-    createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, 'Database Error', message),
+  databaseError: (message?: string, details?: Record<string, any> | string[]) =>
+    createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, message, details),
 }

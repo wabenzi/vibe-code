@@ -7,36 +7,50 @@ process.env.DYNAMODB_ENDPOINT = 'http://localhost:4566'
 process.env.DYNAMODB_TABLE_NAME = 'users-table'
 process.env.AWS_REGION = 'us-west-2'
 
-async function testRepository() {
-  console.log('🧪 Testing LocalStack DynamoDB Repository...')
+const createTestUser = () => {
+  const createRequest = new CreateUserRequest({
+    id: 'test-user-' + Date.now(),
+    name: 'LocalStack Test User'
+  })
   
-  try {
-    // Test create user
-    const createRequest = new CreateUserRequest({
-      id: 'test-user-' + Date.now(),
-      name: 'LocalStack Test User'
-    })
-    
-    console.log('📝 Creating user...', createRequest)
-    const createdUser = await Effect.runPromise(DynamoUserRepository.create(createRequest))
-    console.log('✅ User created:', createdUser)
-    
-    // Test get user
-    console.log('📖 Getting user by ID...')
-    const retrievedUser = await Effect.runPromise(DynamoUserRepository.findById(createdUser.id))
-    console.log('✅ User retrieved:', retrievedUser)
-    
-    // Test get all users
-    console.log('📋 Getting all users...')
-    const allUsers = await Effect.runPromise(DynamoUserRepository.findAll())
-    console.log('✅ All users:', allUsers)
-    
-    console.log('🎉 All tests passed! LocalStack DynamoDB integration is working.')
-    
-  } catch (error) {
-    console.error('❌ Test failed:', error)
-    process.exit(1)
-  }
+  console.log('📝 Creating user...', createRequest)
+  return DynamoUserRepository.create(createRequest).pipe(
+    Effect.tap((user) => Effect.sync(() => console.log('✅ User created:', user)))
+  )
 }
 
-testRepository()
+const testUserRetrieval = (userId: string) => {
+  console.log('📖 Getting user by ID...')
+  return DynamoUserRepository.findById(userId).pipe(
+    Effect.tap((user) => Effect.sync(() => console.log('✅ User retrieved:', user)))
+  )
+}
+
+const testGetAllUsers = () => {
+  console.log('📋 Getting all users...')
+  return DynamoUserRepository.findAll().pipe(
+    Effect.tap((users) => Effect.sync(() => console.log('✅ All users:', users)))
+  )
+}
+
+const testRepositoryProgram = Effect.sync(() => console.log('🧪 Testing LocalStack DynamoDB Repository...')).pipe(
+  Effect.flatMap(() => createTestUser()),
+  Effect.flatMap((createdUser) => 
+    testUserRetrieval(createdUser.id).pipe(
+      Effect.flatMap(() => testGetAllUsers()),
+      Effect.map((allUsers) => ({ createdUser, allUsers }))
+    )
+  ),
+  Effect.tap(() => Effect.sync(() => console.log('🎉 All tests passed! LocalStack DynamoDB integration is working.')))
+)
+
+const program = testRepositoryProgram.pipe(
+  Effect.catchAll((error) => 
+    Effect.sync(() => {
+      console.error('❌ Test failed:', error)
+      process.exit(1)
+    })
+  )
+)
+
+Effect.runPromise(program)

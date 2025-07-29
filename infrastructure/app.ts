@@ -24,7 +24,7 @@ const stackName = isLocalStack ? 'LocalUserApiStack' : 'UserApiStack';
 const stackProps = {
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION || 'us-east-1',
+    region: process.env.CDK_DEFAULT_REGION || process.env.AWS_DEFAULT_REGION || 'us-west-2',
   },
   isLocalStack,
 };
