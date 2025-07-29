@@ -7,13 +7,24 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 
+export interface UserApiStackProps extends cdk.StackProps {
+  /**
+   * Whether this stack is being deployed to LocalStack.
+   * When true, adjusts configuration for local development.
+   */
+  isLocalStack?: boolean;
+}
+
 export class UserApiStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: UserApiStackProps) {
     super(scope, id, props);
+
+    const isLocalStack = props?.isLocalStack || false;
+    const envSuffix = isLocalStack ? '-local' : '';
 
     // CloudWatch Log Group for monitoring
     const apiLogGroup = new logs.LogGroup(this, 'UserApiLogGroup', {
-      logGroupName: '/aws/lambda/user-api',
+      logGroupName: `/aws/lambda/user-api${envSuffix}`,
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
@@ -63,8 +74,11 @@ export class UserApiStack extends cdk.Stack {
       entry: 'src/lambda/create-user.ts',
       role: lambdaRole,
       environment: {
-        LOG_LEVEL: 'INFO',
+        LOG_LEVEL: isLocalStack ? 'DEBUG' : 'INFO',
         DYNAMODB_TABLE_NAME: usersTable.tableName,
+        ...(isLocalStack && {
+          AWS_ENDPOINT_URL: 'http://localhost:4566',
+        }),
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
@@ -87,8 +101,11 @@ export class UserApiStack extends cdk.Stack {
       entry: 'src/lambda/get-user.ts',
       role: lambdaRole,
       environment: {
-        LOG_LEVEL: 'INFO',
+        LOG_LEVEL: isLocalStack ? 'DEBUG' : 'INFO',
         DYNAMODB_TABLE_NAME: usersTable.tableName,
+        ...(isLocalStack && {
+          AWS_ENDPOINT_URL: 'http://localhost:4566',
+        }),
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
@@ -111,8 +128,11 @@ export class UserApiStack extends cdk.Stack {
       entry: 'src/lambda/delete-user.ts',
       role: lambdaRole,
       environment: {
-        LOG_LEVEL: 'INFO',
+        LOG_LEVEL: isLocalStack ? 'DEBUG' : 'INFO',
         DYNAMODB_TABLE_NAME: usersTable.tableName,
+        ...(isLocalStack && {
+          AWS_ENDPOINT_URL: 'http://localhost:4566',
+        }),
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
@@ -135,7 +155,7 @@ export class UserApiStack extends cdk.Stack {
       entry: 'src/lambda/health.ts',
       role: lambdaRole,
       environment: {
-        LOG_LEVEL: 'INFO',
+        LOG_LEVEL: isLocalStack ? 'DEBUG' : 'INFO',
       },
       timeout: cdk.Duration.seconds(10),
       memorySize: 128,
