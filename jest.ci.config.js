@@ -31,10 +31,10 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html', 'cobertura'],
   coverageThreshold: {
     global: {
-      branches: 54,    // Adjusted to account for excluded infrastructure branches
-      functions: 60,   // Adjusted to account for excluded infrastructure functions  
-      lines: 65,       // Maintain reasonable standard for core business logic
-      statements: 65   // Maintain reasonable standard for core business logic
+      branches: 75,    // Slightly below current 79.31% to allow for some flexibility
+      functions: 90,   // High standard since we're achieving 100%
+      lines: 85,       // High standard since we're achieving 93%+
+      statements: 85   // High standard since we're achieving 93%+
     }
   },
   // Ensure we run silently in CI
