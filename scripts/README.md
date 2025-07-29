@@ -11,8 +11,7 @@ scripts/
 ├── validate-scripts.sh         # Script quality validation
 ├── deployment/                 # Deployment scripts
 │   ├── deploy-localstack.sh   # LocalStack deployment and lifecycle
-│   ├── deploy-aws.sh          # AWS cloud deployment
-│   └── direct-deploy.sh       # Direct LocalStack deployment
+│   └── deploy-aws.sh          # AWS cloud deployment
 ├── testing/                   # Test and validation scripts
 │   ├── test-localstack.sh     # LocalStack API testing
 │   ├── test-deployment.sh     # Deployment validation
@@ -22,7 +21,8 @@ scripts/
 │   └── local-dev.sh          # Local development helper
 └── archive/                  # Archived/deprecated scripts
     ├── debug-test.sh         # Debug testing script
-    └── test-pagination.sh    # AWS CLI pagination tests
+    ├── test-pagination.sh    # AWS CLI pagination tests
+    └── direct-deploy.sh      # Direct LocalStack deployment (archived)
 ```
 
 ## Common Logging Library
