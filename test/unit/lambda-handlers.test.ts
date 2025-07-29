@@ -3,9 +3,6 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { User, CreateUserRequest, UserNotFoundError, UserResponse } from '../../src/domain/user'
 import { UserService } from '../../src/services/dynamo-user-service'
 import { DynamoUserRepositoryError } from '../../src/infrastructure/dynamo-user-repository'
-import { Failure } from 'effect/Exit'
-import { cons } from 'effect/List'
-import { CauseTypeId } from 'effect/Cause'
 
 // Define the UserService context for dependency injection
 const TestUserService = Context.GenericTag<UserService>('TestUserService')
@@ -91,10 +88,9 @@ const createTestableCreateUserHandler = (userService: UserService) =>
       // Execute the Effect program with injected service
       const exit = await Effect.runPromiseExit(userService.createUser(createUserRequest))
 
-      if (Effect.isFailure(exit)) {
-        const failure = (exit as Failure<User, UserNotFoundError | DynamoUserRepositoryError>)
-        const error = failure.cause._tag === 'Fail' ? failure.cause.error : failure.cause
-        console.error('Effect error getting user:', error)
+      if (Exit.isFailure(exit)) {
+        const error = exit.cause._tag === 'Fail' ? exit.cause.error : exit.cause
+        console.error('Effect error creating user:', error)
         
         // Handle typed Effect errors
         if (error && typeof error === 'object' && '_tag' in error) {
@@ -202,9 +198,8 @@ const createTestableGetUserHandler = (userService: UserService) =>
       // Execute the Effect program with injected service
       const exit = await Effect.runPromiseExit(userService.getUserById(userId))
 
-      if (Effect.isFailure(exit)) {
-        const failure = (exit as Failure<User, UserNotFoundError | DynamoUserRepositoryError>)
-        const error = failure.cause._tag === 'Fail' ? failure.cause.error : failure.cause
+      if (Exit.isFailure(exit)) {
+        const error = exit.cause._tag === 'Fail' ? exit.cause.error : exit.cause
         console.error('Effect error getting user:', error)
         
         // Handle typed Effect errors
@@ -323,9 +318,8 @@ const createTestableDeleteUserHandler = (userService: UserService) =>
       // Execute the Effect program with injected service
       const exit = await Effect.runPromiseExit(userService.deleteUser(userId))
 
-      if (Effect.isFailure(exit)) {
-        const failure = (exit as Failure<User, UserNotFoundError | DynamoUserRepositoryError>)
-        const error = failure.cause._tag === 'Fail' ? failure.cause.error : failure.cause
+      if (Exit.isFailure(exit)) {
+        const error = exit.cause._tag === 'Fail' ? exit.cause.error : exit.cause
         console.error('Effect error deleting user:', error)
         
         // Handle typed Effect errors
