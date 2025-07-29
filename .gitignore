@@ -49,6 +49,10 @@ temp/
 *.zip
 *.tar.gz
 
+# Generated API clients
+clients/
+openapitools.json
+
 # LocalStack and Docker volumes
 volume/
 .volumes/

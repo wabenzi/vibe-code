@@ -22,7 +22,7 @@ info:
     - LocalStack support for local development
     - Comprehensive testing with automated validation
     - TypeScript with strict type safety
-  version: 1.0.0
+  version: 1.1.0
   contact:
     name: API Support
     url: https://github.com/wabenzi/vibe-code
@@ -97,8 +97,8 @@ paths:
                   value:
                     id: "user-123"
                     name: "John Doe"
-                    createdAt: "2024-01-15T10:30:00.000Z"
-                    updatedAt: "2024-01-15T10:30:00.000Z"
+                    createdAt: "2025-01-15T10:30:00.000Z"
+                    updatedAt: "2025-01-15T10:30:00.000Z"
         '400':
           description: Bad Request - Invalid input data
           content:
@@ -190,8 +190,8 @@ paths:
                   value:
                     id: "user-123"
                     name: "John Doe"
-                    createdAt: "2024-01-15T10:30:00.000Z"
-                    updatedAt: "2024-01-15T10:30:00.000Z"
+                    createdAt: "2025-01-15T10:30:00.000Z"
+                    updatedAt: "2025-01-15T10:30:00.000Z"
         '400':
           description: Bad Request - Invalid user ID
           content:
@@ -232,6 +232,85 @@ paths:
                   value:
                     error: "Database error occurred"
                     message: "Failed to query DynamoDB"
+
+    delete:
+      summary: Delete user by ID
+      description: |
+        Deletes a user by their unique identifier.
+        
+        **Implementation Details:**
+        - Uses Effect.gen for async operations
+        - Validates user exists before deletion
+        - Removes user from DynamoDB
+        - Returns 204 No Content on successful deletion
+        
+        **Business Rules:**
+        - User ID must be provided in path
+        - Returns 404 if user not found
+        - Idempotent operation (safe to call multiple times)
+      operationId: deleteUserById
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier of the user to delete
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9\-_]+$'
+            minLength: 1
+            maxLength: 255
+          examples:
+            basic:
+              summary: Basic user ID
+              value: "user-123"
+            test:
+              summary: Test user ID
+              value: "test-user-localstack-1674567890"
+      responses:
+        '204':
+          description: User deleted successfully (no content returned)
+        '400':
+          description: Bad Request - Invalid user ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_id:
+                  summary: Missing user ID
+                  value:
+                    error: "User ID is required"
+                invalid_id:
+                  summary: Invalid user ID format
+                  value:
+                    error: "Invalid user ID format"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserNotFoundErrorResponse'
+              examples:
+                not_found:
+                  summary: User not found
+                  value:
+                    error: "User not found"
+                    message: "User with ID 'user-123' was not found"
+                    userId: "user-123"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseErrorResponse'
+              examples:
+                database_error:
+                  summary: Database deletion error
+                  value:
+                    error: "Database error occurred"
+                    message: "Failed to delete from DynamoDB"
 
 components:
   schemas:
@@ -276,12 +355,12 @@ components:
           type: string
           format: date-time
           description: ISO timestamp when the user was created
-          example: "2024-01-15T10:30:00.000Z"
+          example: "2025-01-15T10:30:00.000Z"
         updatedAt:
           type: string
           format: date-time
           description: ISO timestamp when the user was last updated
-          example: "2024-01-15T10:30:00.000Z"
+          example: "2025-01-15T10:30:00.000Z"
       additionalProperties: false
 
     ErrorResponse:
