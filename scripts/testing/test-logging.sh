@@ -4,7 +4,7 @@
 # Demonstrates all logging functions and features
 
 # Source common logging functions
-source "$(dirname "$0")/common-logging.sh"
+source "$(dirname "$(dirname "$0")")/common-logging.sh"
 
 echo "Testing Common Logging Library"
 echo "=============================="
@@ -34,18 +34,18 @@ echo
 
 # Test custom prefix
 echo "Testing custom LOG_PREFIX:"
-LOG_PREFIX="CUSTOM" source "$(dirname "$0")/common-logging.sh"
+LOG_PREFIX="CUSTOM" source "$(dirname "$(dirname "$0")")/common-logging.sh"
 log_info "This message has a custom prefix"
 echo
 
 # Test AWS prefix
-LOG_PREFIX="AWS" source "$(dirname "$0")/common-logging.sh"
+LOG_PREFIX="AWS" source "$(dirname "$(dirname "$0")")/common-logging.sh"
 log_info "This simulates AWS deployment logging"
 log_success "AWS operation completed"
 echo
 
 # Test LocalStack prefix
-LOG_PREFIX="LOCALSTACK" source "$(dirname "$0")/common-logging.sh"
+LOG_PREFIX="LOCALSTACK" source "$(dirname "$(dirname "$0")")/common-logging.sh"
 log_info "This simulates LocalStack deployment logging"
 log_success "LocalStack operation completed"
 echo

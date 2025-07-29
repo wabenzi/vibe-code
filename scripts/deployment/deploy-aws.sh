@@ -13,7 +13,7 @@ DEFAULT_REGION="us-west-2"
 
 # Source common logging functions
 LOG_PREFIX="AWS"
-source "$(dirname "$0")/common-logging.sh"
+source "$(dirname "$(dirname "$0")")/common-logging.sh"
 
 get_account_id() {
     aws sts get-caller-identity --query Account --output text

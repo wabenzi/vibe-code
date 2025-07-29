@@ -1,6 +1,29 @@
-# Deployment Testing Guide
+# Scripts Directory
 
-This directory contains comprehensive deployment testing scripts for the AWS Serverless User API.
+This directory contains deployment, testing, and development scripts for the AWS Serverless User API, organized into logical subdirectories for better maintainability.
+
+## Directory Structure
+
+```
+scripts/
+├── README.md                    # This documentation
+├── common-logging.sh           # Shared logging library
+├── validate-scripts.sh         # Script quality validation
+├── deployment/                 # Deployment scripts
+│   ├── deploy-localstack.sh   # LocalStack deployment and lifecycle
+│   ├── deploy-aws.sh          # AWS cloud deployment
+│   └── direct-deploy.sh       # Direct LocalStack deployment
+├── testing/                   # Test and validation scripts
+│   ├── test-localstack.sh     # LocalStack API testing
+│   ├── test-deployment.sh     # Deployment validation
+│   ├── test-logging.sh        # Logging system tests
+│   └── test-all.sh           # Comprehensive test suite
+├── development/               # Development utilities
+│   └── local-dev.sh          # Local development helper
+└── archive/                  # Archived/deprecated scripts
+    ├── debug-test.sh         # Debug testing script
+    └── test-pagination.sh    # AWS CLI pagination tests
+```
 
 ## Common Logging Library
 
@@ -66,17 +89,17 @@ Tests the deployed AWS infrastructure with real API calls and DynamoDB verificat
 **Usage:**
 ```bash
 # Run full deployment test
-./scripts/test-deployment.sh test
+./scripts/testing/test-deployment.sh test
 # or
 npm run test:deployment
 
 # Health check only
-./scripts/test-deployment.sh check
+./scripts/testing/test-deployment.sh check
 # or  
 npm run test:deployment:check
 
 # Cleanup test data only
-./scripts/test-deployment.sh cleanup
+./scripts/testing/test-deployment.sh cleanup
 # or
 npm run test:deployment:cleanup
 ```
@@ -94,12 +117,12 @@ Tests the LocalStack deployment with DynamoDB for local development validation.
 **Usage:**
 ```bash
 # Run LocalStack tests
-./scripts/test-localstack.sh test
+./scripts/testing/test-localstack.sh test
 # or
 npm run test:localstack
 
 # Cleanup LocalStack test data
-./scripts/test-localstack.sh cleanup
+./scripts/testing/test-localstack.sh cleanup
 # or
 npm run test:localstack:cleanup
 ```
@@ -118,22 +141,22 @@ Orchestrates all tests with performance and load testing.
 **Usage:**
 ```bash
 # Run all tests
-./scripts/test-all.sh all
+./scripts/testing/test-all.sh all
 # or
 npm run test:all
 
 # AWS tests only
-./scripts/test-all.sh aws
+./scripts/testing/test-all.sh aws
 # or
 npm run test:all:aws
 
 # LocalStack tests only
-./scripts/test-all.sh localstack
+./scripts/testing/test-all.sh localstack
 # or
 npm run test:all:localstack
 
 # Performance tests only
-./scripts/test-all.sh performance
+./scripts/testing/test-all.sh performance
 # or
 npm run test:all:performance
 ```
@@ -320,7 +343,7 @@ log_footer "Deployment completed successfully"
 Run the comprehensive test script to see all logging functions in action:
 
 ```bash
-./scripts/test-logging.sh
+./scripts/testing/test-logging.sh
 ```
 
 ### Color Reference

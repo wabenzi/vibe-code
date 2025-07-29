@@ -9,7 +9,7 @@ set -e
 # shellcheck disable=SC2034
 export LOG_PREFIX="LOCALSTACK"
 # shellcheck disable=SC1091
-source "$(dirname "$0")/common-logging.sh"
+source "$(dirname "$(dirname "$0")")/common-logging.sh"
 
 # Configuration
 TEST_USER_ID="test-user-localstack-$(date +%s)"

@@ -14,7 +14,8 @@ set -e
 #set -x  # Enable debug mode
 
 # Source common logging functions
-source "$(dirname "$0")/common-logging.sh"
+LOG_PREFIX="TEST"
+source "$(dirname "$(dirname "$0")")/common-logging.sh"
 
 # Configuration
 TEST_USER_ID="test-user-deployment-$(date +%s)"
