@@ -148,8 +148,8 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       // Assert
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Missing required fields: id and name are required')
-      // No message field to check since error is the message
+      expect(body.error).toBe('Validation Error')
+      expect(body.message).toBe('Missing required fields: id and name are required')
 
       // Verify no AWS SDK calls were made due to validation failure
       expect(docClientMock.calls()).toHaveLength(0)
@@ -313,7 +313,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
 
       // Assert
       expect(result.statusCode).toBe(204)
-      expect(result.body).toBe('')
+      expect(result.body).toBe('{}') // Our standardized response returns empty JSON object
 
       // Verify the handler used the real service which called AWS SDK
       expect(docClientMock.calls()).toHaveLength(2) // findById + delete

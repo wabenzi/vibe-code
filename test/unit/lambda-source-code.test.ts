@@ -65,6 +65,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
       expect(result.headers).toEqual({
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
       })
       
       const body = JSON.parse(result.body)
@@ -116,7 +118,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Missing required fields: id and name are required')
+      expect(body.error).toBe('Validation Error')
+      expect(body.message).toBe('Missing required fields: id and name are required')
     })
 
     it('should return 400 for invalid data types', async () => {
@@ -129,7 +132,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
-      expect(body.error).toBe('Invalid data types')
+      expect(body.error).toBe('Validation Error')
+      expect(body.message).toBe('Invalid data types')
     })
   })
 

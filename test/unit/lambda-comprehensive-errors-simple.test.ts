@@ -374,7 +374,8 @@ describe('Comprehensive Lambda Error Testing', () => {
 
       expect(result.statusCode).toBe(400)
       expect(JSON.parse(result.body)).toEqual({
-        error: 'Missing required fields: id and name are required',
+        error: 'Validation Error',
+        message: 'Missing required fields: id and name are required',
         details: {
           id: 'id is required',
           name: null

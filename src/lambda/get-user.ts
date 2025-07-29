@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { Effect, Exit } from 'effect'
 import { ValidationError, UserNotFoundError, UserResponse } from '../domain/user'
 import { createUserService } from '../services/dynamo-user-service'
+import { ApiResponse } from './types/api-response'
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   console.log('Get User Lambda invoked', { event })
@@ -11,30 +12,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const userId = event.pathParameters?.id
 
     if (!userId) {
-      return {
-        statusCode: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-        body: JSON.stringify({
-          error: 'User ID is required',
-        }),
-      }
+      return ApiResponse.badRequest('User ID is required')
     }
 
     // Validate user ID format (basic validation)
     if (!userId.trim() || userId.includes('/') || userId.includes('?') || userId.includes('#') || userId.includes('%') || userId.length > 100) {
-      return {
-        statusCode: 400,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-        body: JSON.stringify({
-          error: 'Invalid user ID format',
-        }),
-      }
+      return ApiResponse.badRequest('Invalid user ID format')
     }
 
     // Execute the Effect program with proper error handling
@@ -56,47 +39,19 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
           /* istanbul ignore next */
           case 'UserNotFoundError':
             /* istanbul ignore next */
-            return {
-              statusCode: 404,
-              headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-              },
-              body: JSON.stringify({
-                error: 'User not found',
-                message: (error as any).message,
-                userId: (error as any).userId,
-              }),
-            }
+            return ApiResponse.notFound('User not found', (error as any).message)
           /* istanbul ignore next */
           case 'DynamoUserRepositoryError':
             /* istanbul ignore next */
-            return {
-              statusCode: 500,
-              headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-              },
-              body: JSON.stringify({
-                error: 'Database error',
-                message: (error as any).message,
-              }),
-            }
+            return ApiResponse.databaseError((error as any).message)
         }
       }
       
       /* istanbul ignore next */
-      return {
-        statusCode: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-        body: JSON.stringify({
-          error: 'Internal server error',
-          message: typeof error === 'string' ? error : 'Unknown error',
-        }),
-      }
+      return ApiResponse.internalServerError(
+        'Internal server error',
+        typeof error === 'string' ? error : 'Unknown error'
+      )
     }
 
     const user = exit.value
@@ -109,30 +64,17 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       updatedAt: user.updatedAt.toISOString(),
     })
 
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify(userResponse),
-    }
+    return ApiResponse.ok(userResponse)
+
   } catch (error) {
     /* istanbul ignore next */
     console.error('Error getting user:', error)
 
     // Generic error handling for any uncaught errors
     /* istanbul ignore next */
-    return {
-      statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify({
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      }),
-    }
+    return ApiResponse.internalServerError(
+      'Internal server error',
+      error instanceof Error ? error.message : 'Unknown error'
+    )
   }
 }
