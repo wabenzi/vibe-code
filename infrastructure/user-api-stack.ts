@@ -128,6 +128,26 @@ export class UserApiStack extends cdk.Stack {
       },
     });
 
+    // Health Check Lambda Function (for CI/CD and monitoring)
+    const healthFunction = new NodejsFunction(this, 'HealthFunction', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'handler',
+      entry: 'src/lambda/health.ts',
+      role: lambdaRole,
+      environment: {
+        LOG_LEVEL: 'INFO',
+      },
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      logGroup: apiLogGroup,
+      bundling: {
+        externalModules: [],
+        minify: true,
+        sourceMap: false,
+        target: 'node20',
+      },
+    });
+
     // API Gateway
     const api = new apigateway.RestApi(this, 'UserApi', {
       restApiName: 'User Management API',
@@ -149,6 +169,10 @@ export class UserApiStack extends cdk.Stack {
 
     // Users resource
     const usersResource = api.root.addResource('users');
+
+    // GET /health - Health check endpoint
+    const healthResource = api.root.addResource('health');
+    healthResource.addMethod('GET', new apigateway.LambdaIntegration(healthFunction));
 
     // POST /users - Create user
     usersResource.addMethod('POST', new apigateway.LambdaIntegration(createUserFunction), {
@@ -174,15 +198,15 @@ export class UserApiStack extends cdk.Stack {
     dashboard.addWidgets(
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'Lambda Invocations',
-        left: [createUserFunction.metricInvocations(), getUserFunction.metricInvocations(), deleteUserFunction.metricInvocations()],
+        left: [createUserFunction.metricInvocations(), getUserFunction.metricInvocations(), deleteUserFunction.metricInvocations(), healthFunction.metricInvocations()],
       }),
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'Lambda Errors',
-        left: [createUserFunction.metricErrors(), getUserFunction.metricErrors(), deleteUserFunction.metricErrors()],
+        left: [createUserFunction.metricErrors(), getUserFunction.metricErrors(), deleteUserFunction.metricErrors(), healthFunction.metricErrors()],
       }),
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'Lambda Duration',
-        left: [createUserFunction.metricDuration(), getUserFunction.metricDuration(), deleteUserFunction.metricDuration()],
+        left: [createUserFunction.metricDuration(), getUserFunction.metricDuration(), deleteUserFunction.metricDuration(), healthFunction.metricDuration()],
       })
     );
 

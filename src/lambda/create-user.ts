@@ -32,7 +32,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
           'Access-Control-Allow-Origin': '*',
         },
         body: JSON.stringify({
-          error: 'Invalid JSON in request body',
+          error: `Invalid JSON in request body`,
         }),
       }
     }
