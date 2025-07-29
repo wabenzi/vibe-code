@@ -13,7 +13,6 @@ scripts/
 ├── README.md                    # Updated documentation
 ├── common-logging.sh           # Shared logging library
 ├── validate-scripts.sh         # Script quality validation
-├── test-config.sh              # Test configuration
 ├── deployment/                 # Deployment scripts
 │   ├── deploy-localstack.sh   # LocalStack deployment and lifecycle
 │   ├── deploy-aws.sh          # AWS cloud deployment

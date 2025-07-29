@@ -252,7 +252,7 @@ Test data is automatically cleaned up after each test run.
 
 2. **Stack not found**
    - Ensure the stack is deployed: `npm run deploy:aws`
-   - Check stack name in `test-config.sh`
+   - Default stack name is "UserApiStack" (configured in each script)
 
 3. **LocalStack not running**
    ```bash
@@ -288,11 +288,11 @@ These scripts can be integrated into CI/CD pipelines:
 
 ## Configuration
 
-Test configuration is managed in `test-config.sh` and includes:
-- Stack and table names
-- LocalStack URLs
-- Test timeouts
-- Performance test parameters
+Each script is self-contained with its own configuration variables:
+- **AWS scripts**: Stack name "UserApiStack", region "us-west-2"
+- **LocalStack scripts**: URL "http://localhost:4566"
+- **Test scripts**: Auto-generated test user IDs, 30s timeouts
+- **Performance**: 5 requests for basic tests, 10 concurrent for load tests
 
 ## Security Notes
 
