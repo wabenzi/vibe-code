@@ -3,6 +3,9 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { User, CreateUserRequest, UserNotFoundError, UserResponse } from '../../src/domain/user'
 import { UserService } from '../../src/services/dynamo-user-service'
 import { DynamoUserRepositoryError } from '../../src/infrastructure/dynamo-user-repository'
+import { Failure } from 'effect/Exit'
+import { cons } from 'effect/List'
+import { CauseTypeId } from 'effect/Cause'
 
 // Define the UserService context for dependency injection
 const TestUserService = Context.GenericTag<UserService>('TestUserService')
@@ -88,9 +91,10 @@ const createTestableCreateUserHandler = (userService: UserService) =>
       // Execute the Effect program with injected service
       const exit = await Effect.runPromiseExit(userService.createUser(createUserRequest))
 
-      if (Exit.isFailure(exit)) {
-        const error = exit.cause._tag === 'Fail' ? exit.cause.error : exit.cause
-        console.error('Effect error creating user:', error)
+      if (Effect.isFailure(exit)) {
+        const failure = (exit as Failure<User, UserNotFoundError | DynamoUserRepositoryError>)
+        const error = failure.cause._tag === 'Fail' ? failure.cause.error : failure.cause
+        console.error('Effect error getting user:', error)
         
         // Handle typed Effect errors
         if (error && typeof error === 'object' && '_tag' in error) {
@@ -123,7 +127,10 @@ const createTestableCreateUserHandler = (userService: UserService) =>
         }
       }
 
-      const result = exit.value
+      const result = Effect.isSuccess(exit) ? (exit as Exit.Success<User, DynamoUserRepositoryError | UserNotFoundError>).value : null
+      if (!result) {
+        throw new Error('Unexpected error: no result value')
+      }
 
       // Convert to response format
       const userResponse = new UserResponse({
@@ -196,7 +203,8 @@ const createTestableGetUserHandler = (userService: UserService) =>
       const exit = await Effect.runPromiseExit(userService.getUserById(userId))
 
       if (Effect.isFailure(exit)) {
-        const error = exit.cause._tag === 'Fail' ? exit.cause.error : exit.cause
+        const failure = (exit as Failure<User, UserNotFoundError | DynamoUserRepositoryError>)
+        const error = failure.cause._tag === 'Fail' ? failure.cause.error : failure.cause
         console.error('Effect error getting user:', error)
         
         // Handle typed Effect errors
@@ -243,7 +251,7 @@ const createTestableGetUserHandler = (userService: UserService) =>
         }
       }
 
-      const result = exit.value
+      const result = (exit as Exit.Success<User, UserNotFoundError | DynamoUserRepositoryError>).value
 
       // Convert to response format
       const userResponse = new UserResponse({
@@ -316,7 +324,8 @@ const createTestableDeleteUserHandler = (userService: UserService) =>
       const exit = await Effect.runPromiseExit(userService.deleteUser(userId))
 
       if (Effect.isFailure(exit)) {
-        const error = exit.cause._tag === 'Fail' ? exit.cause.error : exit.cause
+        const failure = (exit as Failure<User, UserNotFoundError | DynamoUserRepositoryError>)
+        const error = failure.cause._tag === 'Fail' ? failure.cause.error : failure.cause
         console.error('Effect error deleting user:', error)
         
         // Handle typed Effect errors
@@ -497,7 +506,7 @@ describe('Lambda Handlers with Mocked Services', () => {
       const result = await handler(event)
 
       expect(result.statusCode).toBe(201)
-      expect(result.headers['Content-Type']).toBe('application/json')
+      expect(result.headers?.['Content-Type']).toBe('application/json')
       
       const responseBody = JSON.parse(result.body)
       expect(responseBody.id).toBe('test-user-123')

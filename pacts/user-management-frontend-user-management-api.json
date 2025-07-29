@@ -1,0 +1,252 @@
+{
+  "consumer": {
+    "name": "user-management-frontend"
+  },
+  "interactions": [
+    {
+      "description": "a request to create a user",
+      "providerStates": [
+        {
+          "name": "user does not exist"
+        }
+      ],
+      "request": {
+        "body": {
+          "id": "user-123",
+          "name": "John Doe"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/users"
+      },
+      "response": {
+        "body": {
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "id": "user-123",
+          "name": "John Doe",
+          "updatedAt": "2025-01-01T00:00:00.000Z"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+                  "match": "datetime"
+                }
+              ]
+            },
+            "$.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+                  "match": "datetime"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 201
+      }
+    },
+    {
+      "description": "a request to create a user that already exists",
+      "providerStates": [
+        {
+          "name": "user already exists"
+        }
+      ],
+      "request": {
+        "body": {
+          "id": "existing-user",
+          "name": "Existing User"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/users"
+      },
+      "response": {
+        "body": {
+          "error": "User with this ID already exists"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "status": 409
+      }
+    },
+    {
+      "description": "a request to create a user with invalid data",
+      "providerStates": [
+        {
+          "name": "user data is invalid"
+        }
+      ],
+      "request": {
+        "body": {
+          "id": "",
+          "name": "John Doe"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "method": "POST",
+        "path": "/users"
+      },
+      "response": {
+        "body": {
+          "error": "Validation failed",
+          "errors": [
+            "id is required"
+          ],
+          "message": "Invalid input data"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.error": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.errors": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.message": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 400
+      }
+    },
+    {
+      "description": "a request to get a non-existent user",
+      "providerStates": [
+        {
+          "name": "user does not exist"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/users/non-existent-user"
+      },
+      "response": {
+        "body": {
+          "error": "User not found",
+          "message": "User with ID 'non-existent-user' was not found",
+          "userId": "non-existent-user"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.message": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 404
+      }
+    },
+    {
+      "description": "a request to get a user",
+      "providerStates": [
+        {
+          "name": "user exists"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/users/user-123"
+      },
+      "response": {
+        "body": {
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "id": "user-123",
+          "name": "John Doe",
+          "updatedAt": "2025-01-01T00:00:00.000Z"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.createdAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+                  "match": "datetime"
+                }
+              ]
+            },
+            "$.updatedAt": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "format": "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+                  "match": "datetime"
+                }
+              ]
+            }
+          },
+          "header": {},
+          "status": {}
+        },
+        "status": 200
+      }
+    }
+  ],
+  "metadata": {
+    "pact-js": {
+      "version": "13.2.0"
+    },
+    "pactRust": {
+      "ffi": "0.4.22",
+      "models": "1.2.3"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "user-management-api"
+  }
+}
