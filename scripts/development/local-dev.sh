@@ -22,7 +22,7 @@ start_env() {
     
     # Additional development-specific information
     log_info "LocalStack Dashboard: http://localhost:4566"
-    log_info "PostgreSQL: localhost:5432 (user: testuser, password: testpass)"
+    log_info "DynamoDB: http://localhost:4566 (via LocalStack)"
 }
 
 # Stop LocalStack environment
@@ -91,15 +91,12 @@ show_logs() {
         "localstack")
             docker logs -f localstack-main
             ;;
-        "postgres")
-            docker logs -f localstack-postgres
-            ;;
         "all")
             docker-compose logs -f
             ;;
         *)
             log_error "Unknown service: $service"
-            log_info "Available services: localstack, postgres, all"
+            log_info "Available services: localstack, all"
             exit 1
             ;;
     esac
@@ -132,7 +129,7 @@ show_help() {
     echo "  stop               Stop LocalStack development environment"
     echo "  deploy             Deploy application to LocalStack"
     echo "  test               Run integration tests"
-    echo "  logs [service]     Show logs (services: localstack, postgres, all)"
+    echo "  logs [service]     Show logs (services: localstack, all)"
     echo "  reset              Reset environment (clean restart)"
     echo "  status             Check LocalStack service status"
     echo "  help               Show this help message"
@@ -140,7 +137,7 @@ show_help() {
     echo "Examples:"
     echo "  $0 start           # Start the development environment"
     echo "  $0 deploy          # Deploy to LocalStack"
-    echo "  $0 logs postgres   # Show PostgreSQL logs"
+    echo "  $0 logs localstack # Show LocalStack logs"
     echo "  $0 reset           # Clean restart everything"
     echo "  $0 status          # Check service status"
 }

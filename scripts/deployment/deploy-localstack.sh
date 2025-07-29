@@ -55,8 +55,8 @@ set_localstack_env() {
         log_debug "  CDK_DEFAULT_REGION: ${CDK_DEFAULT_REGION}"
         log_debug "  CDK_DEFAULT_ACCOUNT: ${CDK_DEFAULT_ACCOUNT}"
         log_debug "  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}"
-        log_debug "  POSTGRES_HOST: ${POSTGRES_HOST:-localhost}"
-        log_debug "  POSTGRES_PORT: ${POSTGRES_PORT:-5432}"
+        log_debug "  DYNAMODB_ENDPOINT: ${DYNAMODB_ENDPOINT:-http://localhost:4566}"
+        log_debug "  DYNAMODB_REGION: ${DYNAMODB_REGION:-us-west-2}"
     fi
     
     log_success "LocalStack environment configured"
