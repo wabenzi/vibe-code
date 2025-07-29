@@ -1,0 +1,454 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'docs/openapi.yaml'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'docs/openapi.yaml'
+      - '.github/workflows/**'
+
+jobs:
+  validate-openapi:
+    runs-on: ubuntu-latest
+    name: Validate OpenAPI Specification
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install yq for YAML validation
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate YAML syntax with yq
+        run: |
+          echo "Validating YAML syntax..."
+          yq eval . docs/openapi.yaml > /dev/null
+          echo "✅ YAML syntax is valid"
+
+      - name: Validate OpenAPI specification
+        run: npm run docs:validate
+
+      - name: Check OpenAPI version and required fields
+        run: |
+          echo "Checking OpenAPI specification structure..."
+          
+          # Check OpenAPI version
+          VERSION=$(yq eval '.openapi' docs/openapi.yaml)
+          echo "OpenAPI version: $VERSION"
+          
+          # Check required top-level fields
+          INFO=$(yq eval '.info.title' docs/openapi.yaml)
+          echo "API title: $INFO"
+          
+          PATHS_COUNT=$(yq eval '.paths | keys | length' docs/openapi.yaml)
+          echo "Number of paths: $PATHS_COUNT"
+          
+          COMPONENTS_COUNT=$(yq eval '.components.schemas | keys | length' docs/openapi.yaml)
+          echo "Number of schema components: $COMPONENTS_COUNT"
+          
+          # Validate that we have at least one path and one schema
+          if [ "$PATHS_COUNT" -eq 0 ]; then
+            echo "❌ No API paths defined"
+            exit 1
+          fi
+          
+          if [ "$COMPONENTS_COUNT" -eq 0 ]; then
+            echo "❌ No schema components defined"
+            exit 1
+          fi
+          
+          echo "✅ OpenAPI structure validation passed"
+
+      - name: Generate TypeScript client (test)
+        run: npm run docs:generate typescript-axios
+
+      - name: Upload generated client as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: typescript-client
+          path: clients/typescript/
+          retention-days: 7
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    name: Unit Tests
+    needs: validate-openapi
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: test/reports/
+          retention-days: 7
+
+  contract-tests:
+    runs-on: ubuntu-latest
+    name: Contract Tests (Pact)
+    needs: validate-openapi
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run contract tests
+        run: npm run test:contract
+
+      - name: Upload Pact contracts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pact-contracts
+          path: pacts/
+          retention-days: 30
+
+      - name: Publish Pact contracts
+        if: github.ref == 'refs/heads/main'
+        env:
+          PACT_BROKER_BASE_URL: ${{ secrets.PACT_BROKER_BASE_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
+        run: |
+          if [ -n "$PACT_BROKER_BASE_URL" ]; then
+            npx pact-broker publish pacts/ \
+              --consumer-app-version="${GITHUB_SHA}" \
+              --broker-base-url="$PACT_BROKER_BASE_URL" \
+              --broker-username="$PACT_BROKER_USERNAME" \
+              --broker-password="$PACT_BROKER_PASSWORD"
+          else
+            echo "Pact broker not configured, skipping contract publishing"
+          fi
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    name: Integration Tests with LocalStack
+    needs: [unit-tests, contract-tests]
+    
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        ports:
+          - 4566:4566
+        env:
+          SERVICES: apigateway,lambda,dynamodb,cloudformation,sts,iam
+          DEBUG: 1
+          DOCKER_HOST: unix:///var/run/docker.sock
+        options: >-
+          --health-cmd="curl -f http://localhost:4566/_localstack/health || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Wait for LocalStack to be ready
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:4566/_localstack/health; do sleep 2; done'
+
+      - name: Setup LocalStack environment
+        run: |
+          # Load environment variables
+          source .env.local || echo "No .env.local file found"
+          
+          # Deploy infrastructure to LocalStack
+          npm run deploy:localstack
+          
+          # Wait for deployment to complete
+          sleep 30
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Run behavioral tests
+        run: npm run test:behavioral
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: test/reports/
+          retention-days: 7
+
+  coverage-report:
+    runs-on: ubuntu-latest
+    name: Coverage Report
+    needs: [unit-tests, integration-tests]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate coverage report
+        run: npm run test:ci
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
+
+  swagger-ui-check:
+    runs-on: ubuntu-latest
+    name: Swagger UI Compatibility Check
+    needs: validate-openapi
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install yq for YAML processing
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Extract API metadata
+        run: |
+          echo "Extracting API metadata for validation..."
+          
+          API_TITLE=$(yq eval '.info.title' docs/openapi.yaml)
+          API_VERSION=$(yq eval '.info.version' docs/openapi.yaml)
+          OPENAPI_VERSION=$(yq eval '.openapi' docs/openapi.yaml)
+          
+          echo "API Title: $API_TITLE"
+          echo "API Version: $API_VERSION"
+          echo "OpenAPI Version: $OPENAPI_VERSION"
+          
+          # Check for required endpoints
+          ENDPOINTS=$(yq eval '.paths | keys | join(", ")' docs/openapi.yaml)
+          echo "Available endpoints: $ENDPOINTS"
+          
+          # Validate specific endpoints exist
+          if ! yq eval '.paths | has("/users")' docs/openapi.yaml; then
+            echo "❌ Missing /users endpoint"
+            exit 1
+          fi
+          
+          if ! yq eval '.paths | has("/users/{id}")' docs/openapi.yaml; then
+            echo "❌ Missing /users/{id} endpoint"
+            exit 1
+          fi
+          
+          echo "✅ Required endpoints are present"
+
+      - name: Install swagger-ui-serve
+        run: npm install -g swagger-ui-serve
+
+      - name: Test Swagger UI serving
+        run: |
+          echo "Testing Swagger UI compatibility..."
+          
+          # Start swagger-ui-serve in background
+          swagger-ui-serve docs/openapi.yaml &
+          SERVER_PID=$!
+          
+          # Wait for server to start
+          sleep 10
+          
+          # Check if server is responding
+          if curl -f http://localhost:8080 > /dev/null 2>&1; then
+            echo "✅ Swagger UI server is responding"
+          else
+            echo "❌ Swagger UI server failed to start or respond"
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          fi
+          
+          # Check if the OpenAPI spec is being served correctly
+          if curl -f http://localhost:8080/docs/openapi.yaml > /dev/null 2>&1; then
+            echo "✅ OpenAPI specification is accessible via HTTP"
+          else
+            echo "ℹ️  OpenAPI spec not directly accessible (this is normal for some setups)"
+          fi
+          
+          # Kill the server
+          kill $SERVER_PID
+          
+          echo "✅ Swagger UI serving test passed"
+
+  enhanced-validation:
+    runs-on: ubuntu-latest
+    name: Enhanced OpenAPI Validation with yq
+    needs: validate-openapi
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          yq --version
+
+      - name: Comprehensive API structure validation
+        run: |
+          echo "Running comprehensive OpenAPI validation..."
+          
+          # Validate API info section
+          echo "📋 Validating API information..."
+          TITLE=$(yq eval '.info.title' docs/openapi.yaml)
+          VERSION=$(yq eval '.info.version' docs/openapi.yaml)
+          DESCRIPTION=$(yq eval '.info.description' docs/openapi.yaml)
+          
+          if [ "$TITLE" = "null" ]; then
+            echo "❌ Missing API title"
+            exit 1
+          fi
+          
+          if [ "$VERSION" = "null" ]; then
+            echo "❌ Missing API version"
+            exit 1
+          fi
+          
+          echo "✅ API info section is complete"
+          echo "   Title: $TITLE"
+          echo "   Version: $VERSION"
+          
+          # Validate servers section
+          echo "🌐 Validating servers configuration..."
+          SERVERS_COUNT=$(yq eval '.servers | length' docs/openapi.yaml)
+          if [ "$SERVERS_COUNT" -eq 0 ]; then
+            echo "❌ No servers defined"
+            exit 1
+          fi
+          echo "✅ Found $SERVERS_COUNT server(s) configured"
+          
+          # Validate paths and methods
+          echo "🛣️  Validating API paths and methods..."
+          
+          # Check POST /users
+          if yq eval '.paths."/users".post' docs/openapi.yaml | grep -q "null"; then
+            echo "❌ Missing POST /users endpoint"
+            exit 1
+          fi
+          
+          # Check GET /users/{id}
+          if yq eval '.paths."/users/{id}".get' docs/openapi.yaml | grep -q "null"; then
+            echo "❌ Missing GET /users/{id} endpoint"
+            exit 1
+          fi
+          
+          echo "✅ All required endpoints are properly defined"
+          
+          # Validate schemas
+          echo "📝 Validating component schemas..."
+          SCHEMAS=$(yq eval '.components.schemas | keys | join(", ")' docs/openapi.yaml)
+          echo "   Available schemas: $SCHEMAS"
+          
+          # Check for required schemas
+          REQUIRED_SCHEMAS=("CreateUserRequest" "UserResponse" "ErrorResponse")
+          for schema in "${REQUIRED_SCHEMAS[@]}"; do
+            if ! yq eval ".components.schemas | has(\"$schema\")" docs/openapi.yaml | grep -q "true"; then
+              echo "❌ Missing required schema: $schema"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All required schemas are present"
+          
+          # Validate error responses
+          echo "⚠️  Validating error response definitions..."
+          ERROR_SCHEMAS=$(yq eval '.components.schemas | keys | map(select(. | test(".*Error.*"))) | join(", ")' docs/openapi.yaml)
+          echo "   Error schemas: $ERROR_SCHEMAS"
+          
+          if [ "$ERROR_SCHEMAS" = "" ]; then
+            echo "❌ No error response schemas found"
+            exit 1
+          fi
+          
+          echo "✅ Error response schemas are defined"
+          
+          # Validate examples
+          echo "📖 Validating examples..."
+          EXAMPLES_COUNT=$(yq eval '[.. | select(has("examples")) | .examples] | flatten | length' docs/openapi.yaml)
+          echo "   Found $EXAMPLES_COUNT example(s)"
+          
+          if [ "$EXAMPLES_COUNT" -eq 0 ]; then
+            echo "⚠️  No examples found (recommended to add examples)"
+          else
+            echo "✅ Examples are provided"
+          fi
+          
+          echo ""
+          echo "🎉 Enhanced OpenAPI validation completed successfully!"

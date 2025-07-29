@@ -68,7 +68,42 @@ curl -X POST https://{api-id}.execute-api.us-west-2.amazonaws.com/prod/users \
   -d '{"id": "user1", "name": "John Doe"}'
 ```
 
-## 📚 API Endpoints
+## � API Documentation
+
+This project includes a comprehensive OpenAPI 3.1.0 specification with interactive documentation.
+
+### View Interactive Documentation
+```bash
+# Validate the OpenAPI specification
+npm run docs:validate
+
+# Serve interactive Swagger UI documentation
+npm run docs:serve
+# Open http://localhost:8080 in your browser
+```
+
+### Generate Client SDKs
+```bash
+# Generate TypeScript client
+npm run docs:generate typescript-axios
+
+# Generate Python client
+npm run docs:generate python
+
+# Generate JavaScript client
+npm run docs:generate javascript
+```
+
+### Documentation Features
+- **Complete API Reference**: All endpoints with request/response schemas
+- **Interactive Testing**: Try API calls directly from the browser
+- **Error Documentation**: Detailed error response formats
+- **Multiple Environments**: AWS production and LocalStack development
+- **Client Generation**: Generate SDKs for multiple programming languages
+
+See [`docs/README.md`](docs/README.md) for detailed documentation information.
+
+## �📚 API Endpoints
 
 ### Create User
 ```http

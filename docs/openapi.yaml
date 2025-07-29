@@ -1,0 +1,384 @@
+openapi: 3.1.0
+info:
+  title: User Management API
+  description: |
+    AWS serverless user management API built with TypeScript, Effect, and DynamoDB.
+    
+    This API provides CRUD operations for user management with DynamoDB persistence.
+    The application is built using functional programming principles with the Effect library
+    and follows AWS serverless best practices.
+    
+    ## Architecture
+    - **API Gateway**: RESTful API endpoints
+    - **AWS Lambda**: Serverless functions for business logic  
+    - **DynamoDB**: NoSQL database for persistence
+    - **CloudWatch**: Monitoring and observability
+    - **CDK**: Infrastructure as Code
+    
+    ## Error Handling
+    All errors are handled using Effect's error handling capabilities with domain-specific error types.
+    
+    ## Development
+    - LocalStack support for local development
+    - Comprehensive testing with automated validation
+    - TypeScript with strict type safety
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: https://github.com/wabenzi/vibe-code
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://{api-id}.execute-api.{region}.amazonaws.com/prod
+    description: AWS Production Environment
+    variables:
+      api-id:
+        default: yz7ny3fa5b
+        description: API Gateway ID
+      region:
+        default: us-west-2
+        description: AWS Region
+  - url: http://localhost:4566/restapis/{api-id}/prod/_user_request_
+    description: LocalStack Development Environment
+    variables:
+      api-id:
+        default: pn2dbiwwdp
+        description: LocalStack API Gateway ID
+
+paths:
+  /users:
+    post:
+      summary: Create a new user
+      description: |
+        Creates a new user with the provided ID and name.
+        
+        **Implementation Details:**
+        - Uses Effect.gen for async operations
+        - Validates input using Effect Schema
+        - Persists to DynamoDB with automatic timestamps
+        - Returns 201 on successful creation
+        
+        **Business Rules:**
+        - User ID must be unique
+        - Name is required and cannot be empty
+        - Timestamps are automatically generated
+      operationId: createUser
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+            examples:
+              basic:
+                summary: Basic user creation
+                value:
+                  id: "user-123"
+                  name: "John Doe"
+              test:
+                summary: Test user
+                value:
+                  id: "test-user-localstack-1674567890"
+                  name: "Test User LocalStack"
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              examples:
+                success:
+                  summary: Successful user creation
+                  value:
+                    id: "user-123"
+                    name: "John Doe"
+                    createdAt: "2024-01-15T10:30:00.000Z"
+                    updatedAt: "2024-01-15T10:30:00.000Z"
+        '400':
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+              examples:
+                missing_body:
+                  summary: Missing request body
+                  value:
+                    error: "Request body is required"
+                validation_error:
+                  summary: Validation error
+                  value:
+                    error: "Validation failed"
+                    message: "Invalid input data"
+                    errors:
+                      - "id is required"
+                      - "name must be a non-empty string"
+        '409':
+          description: Conflict - User already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                user_exists:
+                  summary: User already exists
+                  value:
+                    error: "User with this ID already exists"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseErrorResponse'
+              examples:
+                database_error:
+                  summary: Database connection error
+                  value:
+                    error: "Database error occurred"
+                    message: "Failed to connect to DynamoDB"
+
+  /users/{id}:
+    get:
+      summary: Get user by ID
+      description: |
+        Retrieves a user by their unique identifier.
+        
+        **Implementation Details:**
+        - Uses Effect.gen for async operations
+        - Validates user exists in DynamoDB
+        - Returns complete user data with timestamps
+        
+        **Business Rules:**
+        - User ID must be provided in path
+        - Returns 404 if user not found
+        - Timestamps are formatted as ISO strings
+      operationId: getUserById
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique identifier of the user
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9\-_]+$'
+            minLength: 1
+            maxLength: 255
+          examples:
+            basic:
+              summary: Basic user ID
+              value: "user-123"
+            test:
+              summary: Test user ID
+              value: "test-user-localstack-1674567890"
+      responses:
+        '200':
+          description: User found and returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              examples:
+                success:
+                  summary: Successful user retrieval
+                  value:
+                    id: "user-123"
+                    name: "John Doe"
+                    createdAt: "2024-01-15T10:30:00.000Z"
+                    updatedAt: "2024-01-15T10:30:00.000Z"
+        '400':
+          description: Bad Request - Invalid user ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_id:
+                  summary: Missing user ID
+                  value:
+                    error: "User ID is required"
+                invalid_id:
+                  summary: Invalid user ID format
+                  value:
+                    error: "Invalid user ID format"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserNotFoundErrorResponse'
+              examples:
+                not_found:
+                  summary: User not found
+                  value:
+                    error: "User not found"
+                    message: "User with ID 'user-123' was not found"
+                    userId: "user-123"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatabaseErrorResponse'
+              examples:
+                database_error:
+                  summary: Database query error
+                  value:
+                    error: "Database error occurred"
+                    message: "Failed to query DynamoDB"
+
+components:
+  schemas:
+    CreateUserRequest:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the user
+          pattern: '^[a-zA-Z0-9\-_]+$'
+          minLength: 1
+          maxLength: 255
+          example: "user-123"
+        name:
+          type: string
+          description: Full name of the user
+          minLength: 1
+          maxLength: 255
+          example: "John Doe"
+      additionalProperties: false
+
+    UserResponse:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the user
+          example: "user-123"
+        name:
+          type: string
+          description: Full name of the user
+          example: "John Doe"
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO timestamp when the user was created
+          example: "2024-01-15T10:30:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: ISO timestamp when the user was last updated
+          example: "2024-01-15T10:30:00.000Z"
+      additionalProperties: false
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "An error occurred"
+        message:
+          type: string
+          description: Additional error details
+          example: "Detailed error information"
+      additionalProperties: false
+
+    ValidationErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Validation failed"
+        message:
+          type: string
+          description: Validation error details
+          example: "Invalid input data"
+        errors:
+          type: array
+          description: List of specific validation errors
+          items:
+            type: string
+          example:
+            - "id is required"
+            - "name must be a non-empty string"
+      additionalProperties: false
+
+    UserNotFoundErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - userId
+      properties:
+        error:
+          type: string
+          description: Error type identifier
+          example: "User not found"
+        message:
+          type: string
+          description: Detailed error message
+          example: "User with ID 'user-123' was not found"
+        userId:
+          type: string
+          description: The ID that was not found
+          example: "user-123"
+      additionalProperties: false
+
+    DatabaseErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type identifier
+          example: "Database error occurred"
+        message:
+          type: string
+          description: Database error details
+          example: "Failed to connect to DynamoDB"
+        cause:
+          type: object
+          description: Additional error context (optional)
+          additionalProperties: true
+      additionalProperties: false
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+      description: API Gateway API Key (if enabled)
+
+security: []
+
+tags:
+  - name: Users
+    description: User management operations
+    externalDocs:
+      description: Find out more about the User API
+      url: https://github.com/wabenzi/vibe-code
+
+externalDocs:
+  description: API Documentation and Examples
+  url: https://github.com/wabenzi/vibe-code/blob/main/API_USAGE.md
