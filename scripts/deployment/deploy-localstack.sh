@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
+PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
 # Source common logging functions
 # shellcheck disable=SC2034
@@ -24,15 +24,41 @@ check_docker() {
 # Set LocalStack environment
 set_localstack_env() {
     log_info "Setting LocalStack environment variables..."
-    # Note: AWS_ENDPOINT_URL is automatically set by cdklocal, don't set it manually
-    export AWS_ACCESS_KEY_ID=test
-    export AWS_SECRET_ACCESS_KEY=test
-    export AWS_DEFAULT_REGION=us-west-2
-    export CDK_DEFAULT_ACCOUNT=000000000000
-    export CDK_DEFAULT_REGION=us-west-2
+    
+    # Source environment variables from .env.local if it exists
+    if [ -f "${PROJECT_DIR}/.env.local" ]; then
+        log_info "Loading environment from .env.local..."
+        set -a  # automatically export all variables
+        # shellcheck disable=SC1091
+        source "${PROJECT_DIR}/.env.local"
+        set +a  # disable automatic export
+        log_success "Environment variables loaded from .env.local"
+    else
+        log_warning ".env.local not found, using default values..."
+        # Fallback to hardcoded values if .env.local doesn't exist
+        export AWS_ACCESS_KEY_ID=test
+        export AWS_SECRET_ACCESS_KEY=test
+        export AWS_DEFAULT_REGION=us-west-2
+        export CDK_DEFAULT_ACCOUNT=000000000000
+        export CDK_DEFAULT_REGION=us-west-2
+    fi
+    
+    # Always set these LocalStack-specific variables
     export AWS_S3_FORCE_PATH_STYLE=true
     export AWS_S3_ADDRESSING_STYLE=path
     export AWS_PAGER=""
+    
+    # Debug: Show key environment variables if DEBUG is enabled
+    if [ "${DEBUG:-false}" = "true" ] || [ "${LOG_LEVEL}" = "DEBUG" ]; then
+        log_debug "Environment configuration:"
+        log_debug "  AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}"
+        log_debug "  CDK_DEFAULT_REGION: ${CDK_DEFAULT_REGION}"
+        log_debug "  CDK_DEFAULT_ACCOUNT: ${CDK_DEFAULT_ACCOUNT}"
+        log_debug "  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}"
+        log_debug "  POSTGRES_HOST: ${POSTGRES_HOST:-localhost}"
+        log_debug "  POSTGRES_PORT: ${POSTGRES_PORT:-5432}"
+    fi
+    
     log_success "LocalStack environment configured"
 }
 
@@ -131,11 +157,13 @@ show_info() {
 }
 
 # Main script logic
+# Load environment variables for all commands
+set_localstack_env
+
 case "${1:-deploy}" in
     "deploy")
         log_info "Starting LocalStack deployment..."
         check_docker
-        set_localstack_env
         start_services
         bootstrap_cdk
         deploy_infrastructure
@@ -143,7 +171,6 @@ case "${1:-deploy}" in
         ;;
     "teardown")
         log_info "Starting LocalStack teardown..."
-        set_localstack_env
         
         # Try to destroy CDK stack first
         log_info "Destroying CDK infrastructure..."
