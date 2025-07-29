@@ -11,63 +11,16 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 LOG_PREFIX="LOCAL-DEV"
 source "$(dirname "$(dirname "$0")")/common-logging.sh"
 
-# Check if Docker is running
-check_docker() {
-    if ! docker info >/dev/null 2>&1; then
-        log_error "Docker is not running. Please start Docker Desktop."
-        exit 1
-    fi
-    log_success "Docker is running"
-}
-
-# Wait for service to be ready
-wait_for_service() {
-    local service_name=$1
-    local host=$2
-    local port=$3
-    local max_attempts=30
-    local attempt=1
-
-    log_info "Waiting for $service_name to be ready..."
-    
-    while [ $attempt -le $max_attempts ]; do
-        if nc -z "$host" "$port" 2>/dev/null; then
-            log_success "$service_name is ready!"
-            return 0
-        fi
-        echo -n "."
-        sleep 2
-        attempt=$((attempt + 1))
-    done
-    
-    log_error "$service_name failed to start within $((max_attempts * 2)) seconds"
-    return 1
-}
+# Deploy to LocalStack
 
 # Start LocalStack environment
 start_env() {
     log_info "Starting LocalStack development environment..."
     
-    check_docker
+    # Delegate to the comprehensive deployment script
+    "${SCRIPT_DIR}/../deployment/deploy-localstack.sh" deploy
     
-    cd "$PROJECT_DIR"
-    
-    # Start services
-    docker-compose up -d
-    
-    # Wait for services to be ready
-    wait_for_service "LocalStack" "localhost" "4566"
-    wait_for_service "PostgreSQL" "localhost" "5432"
-    
-    # Source environment variables
-    if [ -f ".env.local" ]; then
-        set -a
-        source .env.local
-        set +a
-        log_success "Environment variables loaded"
-    fi
-    
-    log_success "LocalStack environment is ready!"
+    # Additional development-specific information
     log_info "LocalStack Dashboard: http://localhost:4566"
     log_info "PostgreSQL: localhost:5432 (user: testuser, password: testpass)"
 }
@@ -76,10 +29,8 @@ start_env() {
 stop_env() {
     log_info "Stopping LocalStack development environment..."
     
-    cd "$PROJECT_DIR"
-    docker-compose down
-    
-    log_success "LocalStack environment stopped"
+    # Delegate to the comprehensive deployment script
+    "${SCRIPT_DIR}/../deployment/deploy-localstack.sh" teardown
 }
 
 # Deploy to LocalStack
@@ -158,18 +109,16 @@ show_logs() {
 reset_env() {
     log_warning "Resetting LocalStack environment (this will remove all data)..."
     
-    cd "$PROJECT_DIR"
+    # Use the comprehensive cleanup and restart functionality
+    "${SCRIPT_DIR}/../deployment/deploy-localstack.sh" restart
+}
+
+# Check status of LocalStack services
+status_env() {
+    log_info "Checking LocalStack environment status..."
     
-    # Stop and remove containers
-    docker-compose down -v
-    
-    # Remove LocalStack volume if it exists
-    docker volume rm aws-test_localstack_data 2>/dev/null || true
-    
-    # Start fresh
-    start_env
-    
-    log_success "Environment reset completed!"
+    # Delegate to the deployment script's status command
+    "${SCRIPT_DIR}/../deployment/deploy-localstack.sh" status
 }
 
 # Show help
@@ -185,6 +134,7 @@ show_help() {
     echo "  test               Run integration tests"
     echo "  logs [service]     Show logs (services: localstack, postgres, all)"
     echo "  reset              Reset environment (clean restart)"
+    echo "  status             Check LocalStack service status"
     echo "  help               Show this help message"
     echo ""
     echo "Examples:"
@@ -192,6 +142,7 @@ show_help() {
     echo "  $0 deploy          # Deploy to LocalStack"
     echo "  $0 logs postgres   # Show PostgreSQL logs"
     echo "  $0 reset           # Clean restart everything"
+    echo "  $0 status          # Check service status"
 }
 
 # Main command handling
@@ -213,6 +164,9 @@ case "${1:-help}" in
         ;;
     "reset")
         reset_env
+        ;;
+    "status")
+        status_env
         ;;
     "help"|"-h"|"--help")
         show_help

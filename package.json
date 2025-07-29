@@ -24,6 +24,7 @@
     "local:test": "./scripts/development/local-dev.sh test",
     "local:logs": "./scripts/development/local-dev.sh logs",
     "local:reset": "./scripts/development/local-dev.sh reset",
+    "local:status": "./scripts/development/local-dev.sh status",
     "test:integration": "jest --config jest.integration.config.js",
     "deploy:localstack": "scripts/deployment/deploy-localstack.sh",
     "deploy:localstack:teardown": "scripts/deployment/deploy-localstack.sh teardown",
