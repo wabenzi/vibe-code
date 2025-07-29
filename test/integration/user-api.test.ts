@@ -1,4 +1,5 @@
 import { ApiClient, createTestUser, getApiUrl } from '../utils/api-client';
+import { withRetryTest } from '../utils/retry';
 import { AxiosError } from 'axios';
 
 describe('User API Integration Tests', () => {
@@ -7,25 +8,22 @@ describe('User API Integration Tests', () => {
 
   beforeAll(async () => {
     const apiUrl = getApiUrl();
-    apiClient = new ApiClient(apiUrl);
+    // Create ApiClient with specific retry options for integration tests
+    apiClient = new ApiClient(apiUrl, {
+      maxAttempts: 3,
+      baseDelayMs: 1000,
+      maxDelayMs: 8000,
+      exponentialBase: 2
+    });
     
-    // Wait for API to be ready
+    // Wait for API to be ready using health check
     console.log(`Testing API at: ${apiUrl}`);
     
-    // Retry mechanism for API readiness
-    let retries = 10;
-    while (retries > 0) {
-      try {
-        await apiClient.getUser('health-check');
-        break;
-      } catch (error) {
-        retries--;
-        if (retries === 0) {
-          console.warn('API health check failed, proceeding with tests anyway');
-        } else {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-      }
+    const isHealthy = await apiClient.healthCheck();
+    if (!isHealthy) {
+      console.warn('API health check failed, proceeding with tests anyway');
+    } else {
+      console.log('API is ready for testing');
     }
   });
 
@@ -42,7 +40,7 @@ describe('User API Integration Tests', () => {
   });
 
   describe('POST /users', () => {
-    it('should create a new user with valid data', async () => {
+    withRetryTest('should create a new user with valid data', async () => {
       const userData = createTestUser();
       
       const response = await apiClient.createUser(userData);
@@ -145,7 +143,7 @@ describe('User API Integration Tests', () => {
   });
 
   describe('User Lifecycle Tests', () => {
-    it('should handle complete user lifecycle', async () => {
+    withRetryTest('should handle complete user lifecycle', async () => {
       // Create user
       const userData = createTestUser({
         id: `lifecycle-test-user-${Date.now()}`,
@@ -170,7 +168,7 @@ describe('User API Integration Tests', () => {
   });
 
   describe('Concurrent Operations', () => {
-    it('should handle concurrent user creation', async () => {
+    withRetryTest('should handle concurrent user creation', async () => {
       const concurrentUsers = Array.from({ length: 5 }, (_, i) =>
         createTestUser({ id: `concurrent-user-${i}-${Date.now()}` })
       );
@@ -217,7 +215,7 @@ describe('User API Integration Tests', () => {
   });
 
   describe('Performance Tests', () => {
-    it('should respond within acceptable time limits', async () => {
+    withRetryTest('should respond within acceptable time limits', async () => {
       const userData = createTestUser();
       
       const startTime = Date.now();
@@ -232,7 +230,7 @@ describe('User API Integration Tests', () => {
       createdUserIds.push(userData.id);
     });
 
-    it('should handle rapid sequential requests', async () => {
+    withRetryTest('should handle rapid sequential requests', async () => {
       const users = Array.from({ length: 3 }, (_, i) =>
         createTestUser({ id: `rapid-test-${i}-${Date.now()}` })
       );

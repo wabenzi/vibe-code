@@ -25,6 +25,12 @@ async function waitForLocalStack(timeout = 60000): Promise<void> {
 export default async function integrationGlobalSetup() {
   console.log('🐳 Setting up integration test environment...');
   
+  // Skip LocalStack setup if NODE_ENV is production (for AWS testing)
+  if (process.env.NODE_ENV === 'production') {
+    console.log('🚀 Skipping LocalStack setup - running against AWS production');
+    return;
+  }
+  
   try {
     // Check if LocalStack is running
     await waitForLocalStack();
@@ -32,7 +38,7 @@ export default async function integrationGlobalSetup() {
     // Deploy infrastructure to LocalStack
     console.log('🏗️  Deploying test infrastructure...');
     await execAsync('npm run deploy:localstack', {
-      env: { ...process.env, NODE_ENV: 'test' }
+      env: { ...process.env, NODE_ENV: process.env.NODE_ENV || 'test' }
     });
     
     // Wait a bit for infrastructure to be ready
