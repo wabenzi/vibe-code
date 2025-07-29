@@ -1,10 +1,10 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { Effect, Exit } from 'effect'
-import { ValidationError, UserNotFoundError, UserResponse } from '../domain/user'
+import { UserNotFoundError } from '../domain/user'
 import { createUserService } from '../services/dynamo-user-service'
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  console.log('Get User Lambda invoked', { event })
+  console.log('Delete User Lambda invoked', { event })
 
   try {
     // Extract user ID from path parameters
@@ -39,11 +39,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     // Execute the Effect program with proper error handling
     const userService = createUserService()
-    const exit = await Effect.runPromiseExit(userService.getUserById(userId))
+    const exit = await Effect.runPromiseExit(userService.deleteUser(userId))
 
     if (Exit.isFailure(exit)) {
       const error = exit.cause._tag === 'Fail' ? exit.cause.error : exit.cause
-      console.error('Effect error getting user:', error)
+      console.error('Effect error deleting user:', error)
       
       // Handle typed Effect errors
       if (error && typeof error === 'object' && '_tag' in error) {
@@ -89,26 +89,16 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       }
     }
 
-    const user = exit.value
-
-    // Convert to response format
-    const userResponse = new UserResponse({
-      id: user.id,
-      name: user.name,
-      createdAt: user.createdAt.toISOString(),
-      updatedAt: user.updatedAt.toISOString(),
-    })
-
     return {
-      statusCode: 200,
+      statusCode: 204,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify(userResponse),
+      body: '',
     }
   } catch (error) {
-    console.error('Error getting user:', error)
+    console.error('Error deleting user:', error)
 
     // Generic error handling for any uncaught errors
     return {

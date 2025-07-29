@@ -104,6 +104,30 @@ export class UserApiStack extends cdk.Stack {
       },
     });
 
+    // Delete User Lambda Function
+    const deleteUserFunction = new NodejsFunction(this, 'DeleteUserFunction', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'handler',
+      entry: 'src/lambda/delete-user.ts',
+      role: lambdaRole,
+      environment: {
+        LOG_LEVEL: 'INFO',
+        DYNAMODB_TABLE_NAME: usersTable.tableName,
+      },
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      logGroup: apiLogGroup,
+      bundling: {
+        // Don't exclude AWS SDK v3 packages - bundle them
+        externalModules: [],
+        minify: true,
+        sourceMap: false,
+        // Force bundling of these packages to avoid runtime issues
+        nodeModules: ['@aws-sdk/client-dynamodb', '@aws-sdk/lib-dynamodb'],
+        target: 'node20',
+      },
+    });
+
     // API Gateway
     const api = new apigateway.RestApi(this, 'UserApi', {
       restApiName: 'User Management API',
@@ -138,6 +162,9 @@ export class UserApiStack extends cdk.Stack {
     const userResource = usersResource.addResource('{id}');
     userResource.addMethod('GET', new apigateway.LambdaIntegration(getUserFunction));
 
+    // DELETE /users/{id} - Delete user by ID
+    userResource.addMethod('DELETE', new apigateway.LambdaIntegration(deleteUserFunction));
+
     // CloudWatch Dashboard for monitoring
     const dashboard = new cdk.aws_cloudwatch.Dashboard(this, 'UserApiDashboard', {
       dashboardName: 'UserAPI-Monitoring',
@@ -147,15 +174,15 @@ export class UserApiStack extends cdk.Stack {
     dashboard.addWidgets(
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'Lambda Invocations',
-        left: [createUserFunction.metricInvocations(), getUserFunction.metricInvocations()],
+        left: [createUserFunction.metricInvocations(), getUserFunction.metricInvocations(), deleteUserFunction.metricInvocations()],
       }),
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'Lambda Errors',
-        left: [createUserFunction.metricErrors(), getUserFunction.metricErrors()],
+        left: [createUserFunction.metricErrors(), getUserFunction.metricErrors(), deleteUserFunction.metricErrors()],
       }),
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'Lambda Duration',
-        left: [createUserFunction.metricDuration(), getUserFunction.metricDuration()],
+        left: [createUserFunction.metricDuration(), getUserFunction.metricDuration(), deleteUserFunction.metricDuration()],
       })
     );
 
@@ -189,6 +216,11 @@ export class UserApiStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'GetUserFunctionName', {
       value: getUserFunction.functionName,
       description: 'Get User Lambda Function Name',
+    });
+
+    new cdk.CfnOutput(this, 'DeleteUserFunctionName', {
+      value: deleteUserFunction.functionName,
+      description: 'Delete User Lambda Function Name',
     });
 
     new cdk.CfnOutput(this, 'DynamoDbTableName', {

@@ -83,7 +83,7 @@ describe('User API Integration Tests', () => {
 
     it('should handle special characters in user data', async () => {
       const userData = createTestUser({
-        id: 'test-special-chars-123',
+        id: `test-special-chars-${Date.now()}`,
         name: 'User with Special Chars: !@#$%^&*()_+-=[]{}|;:,.<>?'
       });
       
@@ -134,7 +134,8 @@ describe('User API Integration Tests', () => {
 
     it('should return 400 for invalid user ID format', async () => {
       try {
-        await apiClient.getUser('');
+        // Use a user ID with URL-encoded characters that will be passed to lambda
+        await apiClient.getUser('user%2Fwith%2Finvalid%2Fchars');
         fail('Expected request to fail');
       } catch (error) {
         const axiosError = error as AxiosError;
@@ -147,7 +148,7 @@ describe('User API Integration Tests', () => {
     it('should handle complete user lifecycle', async () => {
       // Create user
       const userData = createTestUser({
-        id: 'lifecycle-test-user',
+        id: `lifecycle-test-user-${Date.now()}`,
         name: 'Lifecycle Test User'
       });
       

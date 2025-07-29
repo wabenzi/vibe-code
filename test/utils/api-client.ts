@@ -66,11 +66,16 @@ export function createTestUser(overrides: Partial<CreateUserRequest> = {}): Crea
 }
 
 export function getApiUrl(): string {
-  // Check for environment variable first
+  // Check for environment variable first (for CI/automated testing)
   if (process.env.API_URL) {
-    return process.env.API_URL;
+    return process.env.API_URL
   }
   
-  // Default to LocalStack API Gateway URL
-  return 'https://e880quwe59.execute-api.localhost.localstack.cloud:4566/local';
+  // For AWS deployment (assumes 'prod' stage)
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://your-aws-api-id.execute-api.us-west-2.amazonaws.com/prod'
+  }
+  
+  // For LocalStack (default)
+  return 'https://xaa4um649v.execute-api.localhost.localstack.cloud:4566/local'
 }
