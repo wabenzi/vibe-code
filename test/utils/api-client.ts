@@ -27,6 +27,9 @@ export class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      // Disable SSL verification for LocalStack
+      httpsAgent: process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0' ? undefined : 
+        new (require('https').Agent)({ rejectUnauthorized: false })
     });
   }
   
@@ -63,12 +66,11 @@ export function createTestUser(overrides: Partial<CreateUserRequest> = {}): Crea
 }
 
 export function getApiUrl(): string {
-  const baseUrl = process.env.API_URL || 'http://localhost:4566';
-  
-  // Handle LocalStack URL format
-  if (baseUrl.includes('localhost:4566')) {
-    return `${baseUrl}/restapis/test-api/prod/_user_request_`;
+  // Check for environment variable first
+  if (process.env.API_URL) {
+    return process.env.API_URL;
   }
   
-  return baseUrl;
+  // Default to LocalStack API Gateway URL
+  return 'https://e880quwe59.execute-api.localhost.localstack.cloud:4566/local';
 }

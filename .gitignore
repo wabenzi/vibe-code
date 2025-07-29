@@ -64,3 +64,9 @@ cache/
 *.crt
 *.p12
 *.pfx
+
+# Miscellaneous
+*.bak
+*.orig
+*.swp
+results.txt
