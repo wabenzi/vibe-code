@@ -74,3 +74,6 @@ cache/
 *.orig
 *.swp
 results.txt
+
+# Generated reports
+SLOC_REPORT.md
