@@ -2,8 +2,15 @@
 
 # AWS Serverless User API - SLOC Report Generator
 # This script analyzes the codebase and generates a comprehensive SLOC report
+# Requires: bc (for precise calculations), find, wc, awk, sort
 
 set -e
+
+# Check for required tools
+if ! command -v bc >/dev/null 2>&1; then
+    echo "❌ Error: bc is not installed. Please run './scripts/macOS-setup.sh' or install bc manually."
+    exit 1
+fi
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPORT_FILE="$PROJECT_ROOT/SLOC_REPORT.md"
@@ -35,17 +42,29 @@ get_total() {
     echo "$wc_output" | tail -n 1 | awk '{print $1}' | grep -E '^[0-9]+$' || echo "0"
 }
 
-# Helper function for division with fallback
-safe_divide() {
+# Helper function for precise mathematical calculations
+calculate_percentage() {
     local numerator="$1"
     local denominator="$2"
     local scale="${3:-1}"
     
-    if command -v bc >/dev/null 2>&1 && [ "$denominator" -ne 0 ]; then
+    if [ "$denominator" -ne 0 ]; then
+        echo "scale=$scale; $numerator * 100 / $denominator" | bc -l
+    else
+        echo "0"
+    fi
+}
+
+# Helper function for division with high precision
+precise_divide() {
+    local numerator="$1"
+    local denominator="$2"
+    local scale="${3:-2}"
+    
+    if [ "$denominator" -ne 0 ]; then
         echo "scale=$scale; $numerator / $denominator" | bc -l
     else
-        # Fallback to basic division
-        echo $(( numerator * 100 / denominator )) | sed 's/..$/.&/'
+        echo "0"
     fi
 }
 
@@ -66,6 +85,19 @@ fi
 SRC_COUNT=$(find "$PROJECT_ROOT/src" -name "*.ts" | wc -l)
 echo "    Found $SRC_COUNT source files, $SRC_TOTAL total lines"
 
+# Show top 3 largest source files for insight
+if [ "$SRC_TOTAL" -gt 0 ]; then
+    echo "    📊 Largest source files:"
+    echo "$SRC_OUTPUT" | head -n 3 | while read -r line; do
+        if [ -n "$line" ]; then
+            sloc=$(echo "$line" | awk '{print $1}')
+            file=$(echo "$line" | awk '{for(i=2;i<=NF;i++) printf "%s ", $i; print ""}' | sed 's/^ *//' | sed 's/ *$//')
+            filename=$(basename "$file")
+            echo "      • $filename: $sloc lines"
+        fi
+    done
+fi
+
 # Test code analysis
 echo "  🧪 Analyzing test code (test/)..."
 if find "$PROJECT_ROOT/test" -name "*.ts" -print0 | xargs -0 wc -l > /tmp/test_wc 2>/dev/null; then
@@ -77,6 +109,15 @@ else
 fi
 TEST_COUNT=$(find "$PROJECT_ROOT/test" -name "*.ts" | wc -l)
 echo "    Found $TEST_COUNT test files, $TEST_TOTAL total lines"
+
+# Show test distribution preview
+if [ "$TEST_TOTAL" -gt 0 ]; then
+    echo "    📊 Test file distribution preview:"
+    echo "      • Unit: $(find "$PROJECT_ROOT/test/unit" -name "*.ts" 2>/dev/null | wc -l) files"
+    echo "      • Integration: $(find "$PROJECT_ROOT/test/integration" -name "*.ts" 2>/dev/null | wc -l) files"
+    echo "      • Contract: $(find "$PROJECT_ROOT/test/contract" -name "*.ts" 2>/dev/null | wc -l) files"
+    echo "      • Other: $(find "$PROJECT_ROOT/test" -name "*.ts" ! -path "*/unit/*" ! -path "*/integration/*" ! -path "*/contract/*" 2>/dev/null | wc -l) files"
+fi
 
 # Infrastructure analysis
 echo "  🏗️  Analyzing infrastructure code..."
@@ -121,16 +162,16 @@ if [ "$CORE_TOTAL" -eq 0 ]; then
     exit 1
 fi
 
-SRC_PERCENT=$(safe_divide "$SRC_TOTAL" "$CORE_TOTAL" 1)
-TEST_PERCENT=$(safe_divide "$TEST_TOTAL" "$CORE_TOTAL" 1)
-INFRA_PERCENT=$(safe_divide "$INFRA_TOTAL" "$CORE_TOTAL" 1)
-CONFIG_PERCENT=$(safe_divide "$CONFIG_JS_TOTAL" "$CORE_TOTAL" 1)
+SRC_PERCENT=$(calculate_percentage "$SRC_TOTAL" "$CORE_TOTAL" 1)
+TEST_PERCENT=$(calculate_percentage "$TEST_TOTAL" "$CORE_TOTAL" 1)
+INFRA_PERCENT=$(calculate_percentage "$INFRA_TOTAL" "$CORE_TOTAL" 1)
+CONFIG_PERCENT=$(calculate_percentage "$CONFIG_JS_TOTAL" "$CORE_TOTAL" 1)
 
-# Test-to-source ratio
+# Test-to-source ratio with high precision
 if [ "$SRC_TOTAL" -eq 0 ]; then
     TEST_RATIO="∞"
 else
-    TEST_RATIO=$(safe_divide "$TEST_TOTAL" "$SRC_TOTAL" 1)
+    TEST_RATIO=$(precise_divide "$TEST_TOTAL" "$SRC_TOTAL" 1)
 fi
 
 echo "📝 Generating report..."
@@ -217,12 +258,12 @@ SETUP_TESTS=${SETUP_TESTS:-0}
 cat >> "$REPORT_FILE" << EOF
 | Test Type | SLOC | Percentage of Tests |
 |-----------|------|-------------------|
-| **Unit Tests** | $UNIT_TESTS | $(echo "scale=1; $UNIT_TESTS * 100 / $TEST_TOTAL" | bc -l)% |
-| **Integration Tests** | $INTEGRATION_TESTS | $(echo "scale=1; $INTEGRATION_TESTS * 100 / $TEST_TOTAL" | bc -l)% |
-| **Contract Tests** | $CONTRACT_TESTS | $(echo "scale=1; $CONTRACT_TESTS * 100 / $TEST_TOTAL" | bc -l)% |
-| **Behavioral Tests** | $BEHAVIORAL_TESTS | $(echo "scale=1; $BEHAVIORAL_TESTS * 100 / $TEST_TOTAL" | bc -l)% |
-| **Test Utilities** | $UTILS_TESTS | $(echo "scale=1; $UTILS_TESTS * 100 / $TEST_TOTAL" | bc -l)% |
-| **Test Setup** | $SETUP_TESTS | $(echo "scale=1; $SETUP_TESTS * 100 / $TEST_TOTAL" | bc -l)% |
+| **Unit Tests** | $UNIT_TESTS | $(calculate_percentage "$UNIT_TESTS" "$TEST_TOTAL" 1)% |
+| **Integration Tests** | $INTEGRATION_TESTS | $(calculate_percentage "$INTEGRATION_TESTS" "$TEST_TOTAL" 1)% |
+| **Contract Tests** | $CONTRACT_TESTS | $(calculate_percentage "$CONTRACT_TESTS" "$TEST_TOTAL" 1)% |
+| **Behavioral Tests** | $BEHAVIORAL_TESTS | $(calculate_percentage "$BEHAVIORAL_TESTS" "$TEST_TOTAL" 1)% |
+| **Test Utilities** | $UTILS_TESTS | $(calculate_percentage "$UTILS_TESTS" "$TEST_TOTAL" 1)% |
+| **Test Setup** | $SETUP_TESTS | $(calculate_percentage "$SETUP_TESTS" "$TEST_TOTAL" 1)% |
 
 #### Detailed Test Files
 
@@ -348,7 +389,7 @@ cat >> "$REPORT_FILE" << EOF
 ### Test Coverage Ratio
 - **Test to Source Ratio**: ${TEST_RATIO}:1 ($TEST_TOTAL test SLOC vs $SRC_TOTAL source SLOC)
 - **Test Coverage**: 100% statement coverage, 96.15% branch coverage
-- **Test Distribution**: Unit ($(echo "scale=0; $UNIT_TESTS * 100 / $TEST_TOTAL" | bc)%), Integration ($(echo "scale=0; $INTEGRATION_TESTS * 100 / $TEST_TOTAL" | bc)%), Contract ($(echo "scale=0; $CONTRACT_TESTS * 100 / $TEST_TOTAL" | bc)%), Other ($(echo "scale=0; ($BEHAVIORAL_TESTS + $UTILS_TESTS + $SETUP_TESTS) * 100 / $TEST_TOTAL" | bc)%)
+- **Test Distribution**: Unit ($(calculate_percentage "$UNIT_TESTS" "$TEST_TOTAL" 0)%), Integration ($(calculate_percentage "$INTEGRATION_TESTS" "$TEST_TOTAL" 0)%), Contract ($(calculate_percentage "$CONTRACT_TESTS" "$TEST_TOTAL" 0)%), Other ($(calculate_percentage "$(($BEHAVIORAL_TESTS + $UTILS_TESTS + $SETUP_TESTS))" "$TEST_TOTAL" 0)%)
 
 ### Architecture Distribution
 EOF
@@ -360,13 +401,13 @@ SERVICES_SLOC=$(find "$PROJECT_ROOT/src/services" -name "*.ts" -exec wc -l {} + 
 INFRA_SRC_SLOC=$(find "$PROJECT_ROOT/src/infrastructure" -name "*.ts" -exec wc -l {} + 2>/dev/null | tail -n 1 | awk '{print $1}' || echo "0")
 
 cat >> "$REPORT_FILE" << EOF
-- **Lambda Handlers**: $LAMBDA_SLOC SLOC ($(echo "scale=0; $LAMBDA_SLOC * 100 / $SRC_TOTAL" | bc)% of source code)
-- **Domain Logic**: $DOMAIN_SLOC SLOC ($(echo "scale=0; $DOMAIN_SLOC * 100 / $SRC_TOTAL" | bc)% of source code) 
-- **Services Layer**: $SERVICES_SLOC SLOC ($(echo "scale=0; $SERVICES_SLOC * 100 / $SRC_TOTAL" | bc)% of source code)
-- **Infrastructure Layer**: $INFRA_SRC_SLOC SLOC ($(echo "scale=0; $INFRA_SRC_SLOC * 100 / $SRC_TOTAL" | bc)% of source code)
+- **Lambda Handlers**: $LAMBDA_SLOC SLOC ($(calculate_percentage "$LAMBDA_SLOC" "$SRC_TOTAL" 0)% of source code)
+- **Domain Logic**: $DOMAIN_SLOC SLOC ($(calculate_percentage "$DOMAIN_SLOC" "$SRC_TOTAL" 0)% of source code) 
+- **Services Layer**: $SERVICES_SLOC SLOC ($(calculate_percentage "$SERVICES_SLOC" "$SRC_TOTAL" 0)% of source code)
+- **Infrastructure Layer**: $INFRA_SRC_SLOC SLOC ($(calculate_percentage "$INFRA_SRC_SLOC" "$SRC_TOTAL" 0)% of source code)
 
 ### Technology Stack Distribution
-- **TypeScript**: $CORE_TOTAL SLOC ($(echo "scale=0; $CORE_TOTAL * 100 / $CORE_TOTAL" | bc)%)
+- **TypeScript**: $CORE_TOTAL SLOC (100%)
 - **Infrastructure as Code**: $INFRA_TOTAL SLOC
 - **Test Automation**: $TEST_TOTAL SLOC
 
@@ -404,7 +445,7 @@ cat >> "$REPORT_FILE" << EOF
 *To regenerate this report, run: \`./scripts/generate-sloc-report.sh\`*
 EOF
 
-# Cleanup
+# Cleanup with enhanced file removal
 rm -rf "$TEMP_DIR"
 rm -f /tmp/src_wc /tmp/test_wc /tmp/infra_wc /tmp/config_wc /tmp/scripts_wc
 
@@ -418,5 +459,9 @@ echo "  Infrastructure: $INFRA_TOTAL SLOC ($INFRA_COUNT files)"
 echo "  Configuration: $CONFIG_JS_TOTAL SLOC"
 echo "  Total: $CORE_TOTAL SLOC"
 echo "  Test Ratio: ${TEST_RATIO}:1"
+echo ""
+echo "💡 Key Insights:"
+echo "  • Test coverage is $(if (( $(echo "$TEST_RATIO > 5" | bc -l) )); then echo "excellent"; elif (( $(echo "$TEST_RATIO > 2" | bc -l) )); then echo "good"; else echo "needs improvement"; fi) (${TEST_RATIO}:1 ratio)"
+echo "  • Code distribution: $(calculate_percentage "$TEST_TOTAL" "$CORE_TOTAL" 0)% tests, $(calculate_percentage "$SRC_TOTAL" "$CORE_TOTAL" 0)% source, $(calculate_percentage "$INFRA_TOTAL" "$CORE_TOTAL" 0)% infrastructure"
 echo ""
 echo "🚀 Run './scripts/generate-sloc-report.sh' to regenerate this report anytime!"

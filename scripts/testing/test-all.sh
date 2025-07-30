@@ -118,16 +118,24 @@ test_data_consistency() {
     sleep 1
     local read_response=$(curl -s "$api_url/users/$test_id")
     
-    if command -v jq &> /dev/null; then
-        local created_name=$(echo "$create_response" | jq -r '.name // empty')
-        local read_name=$(echo "$read_response" | jq -r '.name // empty')
-        
-        if [ "$created_name" = "$test_name" ] && [ "$read_name" = "$test_name" ]; then
-            log_success "$environment data consistency test passed"
-        else
-            log_error "$environment data consistency test failed"
-        fi
+    # Enhanced data consistency validation with jq
+    local created_name=$(echo "$create_response" | jq -r '.name // empty')
+    local read_name=$(echo "$read_response" | jq -r '.name // empty')
+    local created_id=$(echo "$create_response" | jq -r '.id // empty')
+    local read_id=$(echo "$read_response" | jq -r '.id // empty')
+    
+    log_info "$environment consistency check:"
+    echo "  Create response: $(echo "$create_response" | jq -c '.')"
+    echo "  Read response:   $(echo "$read_response" | jq -c '.')"
+    
+    if [ "$created_name" = "$test_name" ] && [ "$read_name" = "$test_name" ] && [ "$created_id" = "$test_id" ] && [ "$read_id" = "$test_id" ]; then
+        log_success "$environment data consistency test passed"
     else
+        log_error "$environment data consistency test failed"
+        log_error "Expected: ID=$test_id, Name=$test_name"
+        log_error "Create got: ID=$created_id, Name=$created_name"
+        log_error "Read got: ID=$read_id, Name=$read_name"
+    fi
         log_warning "$environment data consistency test skipped (jq not available)"
     fi
     

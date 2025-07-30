@@ -40,7 +40,8 @@ check_dependencies() {
 	fi
 
 	if ! command -v jq &>/dev/null; then
-		log_warning "jq is not installed. JSON parsing will be limited."
+		log_error "jq is not installed. Please run './scripts/macOS-setup.sh' or install jq manually."
+		exit 1
 	fi
 
 	log_success "Dependencies check passed"
@@ -110,23 +111,38 @@ create_test_user() {
 
 	if [[ "${http_code}" = "200" ]] || [[ "${http_code}" = "201" ]]; then
 		log_success "User created successfully"
-		log_info "Response: ${body}"
+		
+		# Enhanced JSON output with jq formatting
+		log_info "Response (formatted):"
+		echo "${body}" | jq '.'
 
-		# Validate response contains expected fields
-		if command -v jq &>/dev/null; then
-			local user_id
-			user_id=$(echo "${body}" | jq -r '.id // empty')
-			local user_name
-			user_name=$(echo "${body}" | jq -r '.name // empty')
-			local created_at
-			created_at=$(echo "${body}" | jq -r '.createdAt // empty')
+		# Validate response contains expected fields with detailed feedback
+		local user_id user_name created_at updated_at
+		user_id=$(echo "${body}" | jq -r '.id // empty')
+		user_name=$(echo "${body}" | jq -r '.name // empty')
+		created_at=$(echo "${body}" | jq -r '.createdAt // empty')
+		updated_at=$(echo "${body}" | jq -r '.updatedAt // empty')
 
-			if [[ "${user_id}" = "${TEST_USER_ID}" ]] && [[ "${user_name}" = "${TEST_USER_NAME}" ]] && [[ -n "${created_at}" ]]; then
-				log_success "Response validation passed"
+		log_info "Validating response fields:"
+		echo "  Expected ID: ${TEST_USER_ID}"
+		echo "  Actual ID:   ${user_id}"
+		echo "  Expected Name: ${TEST_USER_NAME}"
+		echo "  Actual Name:   ${user_name}"
+		echo "  Created At:    ${created_at}"
+		echo "  Updated At:    ${updated_at}"
+
+		if [[ "${user_id}" = "${TEST_USER_ID}" ]] && [[ "${user_name}" = "${TEST_USER_NAME}" ]] && [[ -n "${created_at}" ]] && [[ -n "${updated_at}" ]]; then
+			log_success "Response validation passed"
+			
+			# Validate timestamp format (ISO 8601)
+			if echo "${created_at}" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}'; then
+				log_success "Timestamp format validation passed"
 			else
-				log_error "Response validation failed"
-				return 1
+				log_warning "Timestamp format may be incorrect: ${created_at}"
 			fi
+		else
+			log_error "Response validation failed"
+			return 1
 		fi
 	else
 		log_error "Failed to create user. HTTP code: ${http_code}"
@@ -188,16 +204,34 @@ verify_dynamo_persistence() {
 		--key "{\"id\":{\"S\":\"$TEST_USER_ID\"}}" \
 		--output json)
 
-	if command -v jq &>/dev/null; then
-		local stored_id
-		local stored_name
-		stored_id=$(echo "$item" | jq -r '.Item.id.S // empty')
-		stored_name=$(echo "$item" | jq -r '.Item.name.S // empty')
+	# Enhanced DynamoDB verification with detailed output
+	local stored_id stored_name stored_created_at stored_updated_at
+	stored_id=$(echo "$item" | jq -r '.Item.id.S // empty')
+	stored_name=$(echo "$item" | jq -r '.Item.name.S // empty')
+	stored_created_at=$(echo "$item" | jq -r '.Item.createdAt.S // empty')
+	stored_updated_at=$(echo "$item" | jq -r '.Item.updatedAt.S // empty')
 
-		if [[ "${stored_id}" == "${TEST_USER_ID}" ]] && [[ "${stored_name}" == "${TEST_USER_NAME}" ]]; then
-			log_success "DynamoDB persistence verification passed"
-			log_info "Stored data: ID=${stored_id}, Name=${stored_name}"
+	log_info "DynamoDB stored data:"
+	echo "$item" | jq '.Item'
+
+	if [[ "${stored_id}" == "${TEST_USER_ID}" ]] && [[ "${stored_name}" == "${TEST_USER_NAME}" ]]; then
+		log_success "DynamoDB persistence verification passed"
+		log_info "✅ ID matches: ${stored_id}"
+		log_info "✅ Name matches: ${stored_name}"
+		log_info "✅ Created at: ${stored_created_at}"
+		log_info "✅ Updated at: ${stored_updated_at}"
+		
+		# Verify all expected fields are present
+		local missing_fields=0
+		[[ -z "${stored_created_at}" ]] && log_warning "Missing createdAt field" && ((missing_fields++))
+		[[ -z "${stored_updated_at}" ]] && log_warning "Missing updatedAt field" && ((missing_fields++))
+		
+		if [[ "${missing_fields}" -eq 0 ]]; then
+			log_success "All expected fields present in DynamoDB"
 		else
+			log_warning "${missing_fields} fields missing from DynamoDB record"
+		fi
+	else
 			log_error "DynamoDB persistence verification failed"
 			log_error "Expected: ID=${TEST_USER_ID}, Name=${TEST_USER_NAME}"
 			log_error "Found: ID=${stored_id}, Name=${stored_name}"
