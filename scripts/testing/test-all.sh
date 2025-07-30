@@ -119,23 +119,25 @@ test_data_consistency() {
     local read_response=$(curl -s "$api_url/users/$test_id")
     
     # Enhanced data consistency validation with jq
-    local created_name=$(echo "$create_response" | jq -r '.name // empty')
-    local read_name=$(echo "$read_response" | jq -r '.name // empty')
-    local created_id=$(echo "$create_response" | jq -r '.id // empty')
-    local read_id=$(echo "$read_response" | jq -r '.id // empty')
-    
-    log_info "$environment consistency check:"
-    echo "  Create response: $(echo "$create_response" | jq -c '.')"
-    echo "  Read response:   $(echo "$read_response" | jq -c '.')"
-    
-    if [ "$created_name" = "$test_name" ] && [ "$read_name" = "$test_name" ] && [ "$created_id" = "$test_id" ] && [ "$read_id" = "$test_id" ]; then
-        log_success "$environment data consistency test passed"
+    if command -v jq >/dev/null 2>&1; then
+        local created_name=$(echo "$create_response" | jq -r '.name // empty')
+        local read_name=$(echo "$read_response" | jq -r '.name // empty')
+        local created_id=$(echo "$create_response" | jq -r '.id // empty')
+        local read_id=$(echo "$read_response" | jq -r '.id // empty')
+        
+        log_info "$environment consistency check:"
+        echo "  Create response: $(echo "$create_response" | jq -c '.')"
+        echo "  Read response:   $(echo "$read_response" | jq -c '.')"
+        
+        if [ "$created_name" = "$test_name" ] && [ "$read_name" = "$test_name" ] && [ "$created_id" = "$test_id" ] && [ "$read_id" = "$test_id" ]; then
+            log_success "$environment data consistency test passed"
+        else
+            log_error "$environment data consistency test failed"
+            log_error "Expected: ID=$test_id, Name=$test_name"
+            log_error "Create got: ID=$created_id, Name=$created_name"
+            log_error "Read got: ID=$read_id, Name=$read_name"
+        fi
     else
-        log_error "$environment data consistency test failed"
-        log_error "Expected: ID=$test_id, Name=$test_name"
-        log_error "Create got: ID=$created_id, Name=$created_name"
-        log_error "Read got: ID=$read_id, Name=$read_name"
-    fi
         log_warning "$environment data consistency test skipped (jq not available)"
     fi
     
@@ -158,7 +160,7 @@ test_data_consistency() {
 test_aws_deployment() {
     log_section "Testing AWS Deployment"
     
-    if ! ./scripts/test-deployment.sh test; then
+    if ! ./scripts/testing/test-deployment.sh test; then
         log_error "AWS deployment test failed"
         return 1
     fi
@@ -191,7 +193,7 @@ test_localstack_deployment() {
         return 0
     fi
     
-    if ! ./scripts/test-localstack.sh test; then
+    if ! ./scripts/testing/test-localstack.sh test; then
         log_error "LocalStack deployment test failed"
         return 1
     fi
@@ -297,8 +299,8 @@ main() {
 }
 
 # Make scripts executable
-chmod +x scripts/test-deployment.sh 2>/dev/null || true
-chmod +x scripts/test-localstack.sh 2>/dev/null || true
+chmod +x scripts/testing/test-deployment.sh 2>/dev/null || true
+chmod +x scripts/testing/test-localstack.sh 2>/dev/null || true
 
 # Run main function
 main "$@"

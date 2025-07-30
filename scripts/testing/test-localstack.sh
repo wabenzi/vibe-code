@@ -130,28 +130,29 @@ verify_localstack_dynamo() {
 		--output json 2>/dev/null)
 
 	# Enhanced LocalStack DynamoDB verification
-	local stored_id stored_name stored_created_at stored_updated_at
-	stored_id=$(echo "${item}" | jq -r '.Item.id.S // empty')
-	stored_name=$(echo "${item}" | jq -r '.Item.name.S // empty')
-	stored_created_at=$(echo "${item}" | jq -r '.Item.createdAt.S // empty')
-	stored_updated_at=$(echo "${item}" | jq -r '.Item.updatedAt.S // empty')
+	if command -v jq >/dev/null 2>&1; then
+		local stored_id stored_name stored_created_at stored_updated_at
+		stored_id=$(echo "${item}" | jq -r '.Item.id.S // empty')
+		stored_name=$(echo "${item}" | jq -r '.Item.name.S // empty')
+		stored_created_at=$(echo "${item}" | jq -r '.Item.createdAt.S // empty')
+		stored_updated_at=$(echo "${item}" | jq -r '.Item.updatedAt.S // empty')
 
-	log_info "LocalStack DynamoDB stored data:"
-	echo "${item}" | jq '.Item'
+		log_info "LocalStack DynamoDB stored data:"
+		echo "${item}" | jq '.Item'
 
-	if [[ ${stored_id} == "${TEST_USER_ID}" ]] && [[ ${stored_name} == "${TEST_USER_NAME}" ]]; then
-		log_success "LocalStack DynamoDB persistence verification passed"
-		log_info "✅ ID matches: ${stored_id}"
-		log_info "✅ Name matches: ${stored_name}"
-		log_info "✅ Created at: ${stored_created_at}"
-		log_info "✅ Updated at: ${stored_updated_at}"
-		
-		# Additional LocalStack-specific validations
-		if [[ -n "${stored_created_at}" ]] && [[ -n "${stored_updated_at}" ]]; then
-			log_success "Timestamp fields properly set in LocalStack"
-		else
-			log_warning "Some timestamp fields missing in LocalStack"
-		fi
+		if [[ ${stored_id} == "${TEST_USER_ID}" ]] && [[ ${stored_name} == "${TEST_USER_NAME}" ]]; then
+			log_success "LocalStack DynamoDB persistence verification passed"
+			log_info "✅ ID matches: ${stored_id}"
+			log_info "✅ Name matches: ${stored_name}"
+			log_info "✅ Created at: ${stored_created_at}"
+			log_info "✅ Updated at: ${stored_updated_at}"
+			
+			# Additional LocalStack-specific validations
+			if [[ -n "${stored_created_at}" ]] && [[ -n "${stored_updated_at}" ]]; then
+				log_success "Timestamp fields properly set in LocalStack"
+			else
+				log_warning "Some timestamp fields missing in LocalStack"
+			fi
 		else
 			log_error "LocalStack DynamoDB persistence verification failed"
 			log_info "Raw DynamoDB item: ${item}"

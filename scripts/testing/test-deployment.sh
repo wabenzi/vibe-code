@@ -205,33 +205,34 @@ verify_dynamo_persistence() {
 		--output json)
 
 	# Enhanced DynamoDB verification with detailed output
-	local stored_id stored_name stored_created_at stored_updated_at
-	stored_id=$(echo "$item" | jq -r '.Item.id.S // empty')
-	stored_name=$(echo "$item" | jq -r '.Item.name.S // empty')
-	stored_created_at=$(echo "$item" | jq -r '.Item.createdAt.S // empty')
-	stored_updated_at=$(echo "$item" | jq -r '.Item.updatedAt.S // empty')
+	if command -v jq >/dev/null 2>&1; then
+		local stored_id stored_name stored_created_at stored_updated_at
+		stored_id=$(echo "$item" | jq -r '.Item.id.S // empty')
+		stored_name=$(echo "$item" | jq -r '.Item.name.S // empty')
+		stored_created_at=$(echo "$item" | jq -r '.Item.createdAt.S // empty')
+		stored_updated_at=$(echo "$item" | jq -r '.Item.updatedAt.S // empty')
 
-	log_info "DynamoDB stored data:"
-	echo "$item" | jq '.Item'
+		log_info "DynamoDB stored data:"
+		echo "$item" | jq '.Item'
 
-	if [[ "${stored_id}" == "${TEST_USER_ID}" ]] && [[ "${stored_name}" == "${TEST_USER_NAME}" ]]; then
-		log_success "DynamoDB persistence verification passed"
-		log_info "✅ ID matches: ${stored_id}"
-		log_info "✅ Name matches: ${stored_name}"
-		log_info "✅ Created at: ${stored_created_at}"
-		log_info "✅ Updated at: ${stored_updated_at}"
-		
-		# Verify all expected fields are present
-		local missing_fields=0
-		[[ -z "${stored_created_at}" ]] && log_warning "Missing createdAt field" && ((missing_fields++))
-		[[ -z "${stored_updated_at}" ]] && log_warning "Missing updatedAt field" && ((missing_fields++))
-		
-		if [[ "${missing_fields}" -eq 0 ]]; then
-			log_success "All expected fields present in DynamoDB"
+		if [[ "${stored_id}" == "${TEST_USER_ID}" ]] && [[ "${stored_name}" == "${TEST_USER_NAME}" ]]; then
+			log_success "DynamoDB persistence verification passed"
+			log_info "✅ ID matches: ${stored_id}"
+			log_info "✅ Name matches: ${stored_name}"
+			log_info "✅ Created at: ${stored_created_at}"
+			log_info "✅ Updated at: ${stored_updated_at}"
+			
+			# Verify all expected fields are present
+			local missing_fields=0
+			[[ -z "${stored_created_at}" ]] && log_warning "Missing createdAt field" && ((missing_fields++))
+			[[ -z "${stored_updated_at}" ]] && log_warning "Missing updatedAt field" && ((missing_fields++))
+			
+			if [[ "${missing_fields}" -eq 0 ]]; then
+				log_success "All expected fields present in DynamoDB"
+			else
+				log_warning "${missing_fields} fields missing from DynamoDB record"
+			fi
 		else
-			log_warning "${missing_fields} fields missing from DynamoDB record"
-		fi
-	else
 			log_error "DynamoDB persistence verification failed"
 			log_error "Expected: ID=${TEST_USER_ID}, Name=${TEST_USER_NAME}"
 			log_error "Found: ID=${stored_id}, Name=${stored_name}"

@@ -38,7 +38,9 @@ export class UserApiStack extends cdk.Stack {
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-      pointInTimeRecovery: false,
+      pointInTimeRecoverySpecification: {
+        pointInTimeRecoveryEnabled: false,
+      },
     });
 
     // IAM role for Lambda functions to access DynamoDB
