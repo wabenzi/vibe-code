@@ -16,21 +16,59 @@ export interface UserApiStackProps extends cdk.StackProps {
 }
 
 export class UserApiStack extends cdk.Stack {
+  private readonly isLocalStack: boolean;
+  private readonly usersTable: dynamodb.Table;
+  private readonly lambdaRole: iam.Role;
+  private readonly apiLogGroup: logs.LogGroup;
+
   constructor(scope: Construct, id: string, props?: UserApiStackProps) {
     super(scope, id, props);
 
-    const isLocalStack = props?.isLocalStack || false;
-    const envSuffix = isLocalStack ? '-local' : '';
+    this.isLocalStack = props?.isLocalStack || false;
+    const envSuffix = this.isLocalStack ? '-local' : '';
 
-    // CloudWatch Log Group for monitoring
-    const apiLogGroup = new logs.LogGroup(this, 'UserApiLogGroup', {
+    // Initialize core resources
+    this.apiLogGroup = this.createLogGroup(envSuffix);
+    this.usersTable = this.createUsersTable();
+    this.lambdaRole = this.createLambdaRole();
+
+    // Create Lambda functions
+    const createUserFunction = this.createUserLambdaFunction('CreateUserFunction', 'create-user.ts');
+    const getUserFunction = this.createUserLambdaFunction('GetUserFunction', 'get-user.ts');
+    const deleteUserFunction = this.createUserLambdaFunction('DeleteUserFunction', 'delete-user.ts');
+    const healthFunction = this.createHealthLambdaFunction();
+
+    // Create API Gateway
+    const api = this.createApiGateway();
+    this.setupApiRoutes(api, {
+      createUserFunction,
+      getUserFunction,
+      deleteUserFunction,
+      healthFunction,
+    });
+
+    // Create monitoring dashboard
+    this.createMonitoringDashboard(api, {
+      createUserFunction,
+      getUserFunction,
+      deleteUserFunction,
+      healthFunction,
+    });
+
+    // Create outputs
+    this.createOutputs(api, { createUserFunction, getUserFunction, deleteUserFunction });
+  }
+
+  private createLogGroup(envSuffix: string): logs.LogGroup {
+    return new logs.LogGroup(this, 'UserApiLogGroup', {
       logGroupName: `/aws/lambda/user-api${envSuffix}`,
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
+  }
 
-    // DynamoDB Table for users
-    const usersTable = new dynamodb.Table(this, 'UsersTable', {
+  private createUsersTable(): dynamodb.Table {
+    return new dynamodb.Table(this, 'UsersTable', {
       tableName: 'users-table',
       partitionKey: {
         name: 'id',
@@ -42,9 +80,10 @@ export class UserApiStack extends cdk.Stack {
         pointInTimeRecoveryEnabled: false,
       },
     });
+  }
 
-    // IAM role for Lambda functions to access DynamoDB
-    const lambdaRole = new iam.Role(this, 'UserApiLambdaRole', {
+  private createLambdaRole(): iam.Role {
+    return new iam.Role(this, 'UserApiLambdaRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
@@ -62,109 +101,61 @@ export class UserApiStack extends cdk.Stack {
                 'dynamodb:Scan',
                 'dynamodb:Query',
               ],
-              resources: [usersTable.tableArn],
+              resources: [this.usersTable.tableArn],
             }),
           ],
         }),
       },
     });
+  }
 
-    // Create User Lambda Function
-    const createUserFunction = new NodejsFunction(this, 'CreateUserFunction', {
+  private createBaseEnvironment(): Record<string, string> {
+    return {
+      LOG_LEVEL: this.isLocalStack ? 'DEBUG' : 'INFO',
+      DYNAMODB_TABLE_NAME: this.usersTable.tableName,
+      ...(this.isLocalStack && {
+        AWS_ENDPOINT_URL: 'http://host.docker.internal:4566',
+        DYNAMODB_ENDPOINT: 'http://host.docker.internal:4566',
+      }),
+    };
+  }
+
+  private createBaseBundlingOptions(): any {
+    return {
+      externalModules: [],
+      minify: true,
+      sourceMap: false,
+      nodeModules: ['@aws-sdk/client-dynamodb', '@aws-sdk/lib-dynamodb'],
+      target: 'node20',
+    };
+  }
+
+  private createUserLambdaFunction(constructId: string, entryFile: string): NodejsFunction {
+    return new NodejsFunction(this, constructId, {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'handler',
-      entry: 'src/lambda/create-user.ts',
-      role: lambdaRole,
-      environment: {
-        LOG_LEVEL: isLocalStack ? 'DEBUG' : 'INFO',
-        DYNAMODB_TABLE_NAME: usersTable.tableName,
-        ...(isLocalStack && {
-          AWS_ENDPOINT_URL: 'http://host.docker.internal:4566',
-          DYNAMODB_ENDPOINT: 'http://host.docker.internal:4566',
-        }),
-      },
+      entry: `src/lambda/${entryFile}`,
+      role: this.lambdaRole,
+      environment: this.createBaseEnvironment(),
       timeout: cdk.Duration.seconds(30),
       memorySize: 256,
-      logGroup: apiLogGroup,
-      bundling: {
-        // Don't exclude AWS SDK v3 packages - bundle them
-        externalModules: [],
-        minify: true,
-        sourceMap: false,
-        // Force bundling of these packages to avoid runtime issues
-        nodeModules: ['@aws-sdk/client-dynamodb', '@aws-sdk/lib-dynamodb'],
-        target: 'node20',
-      },
+      logGroup: this.apiLogGroup,
+      bundling: this.createBaseBundlingOptions(),
     });
+  }
 
-    // Get User Lambda Function
-    const getUserFunction = new NodejsFunction(this, 'GetUserFunction', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'handler',
-      entry: 'src/lambda/get-user.ts',
-      role: lambdaRole,
-      environment: {
-        LOG_LEVEL: isLocalStack ? 'DEBUG' : 'INFO',
-        DYNAMODB_TABLE_NAME: usersTable.tableName,
-        ...(isLocalStack && {
-          AWS_ENDPOINT_URL: 'http://host.docker.internal:4566',
-          DYNAMODB_ENDPOINT: 'http://host.docker.internal:4566',
-        }),
-      },
-      timeout: cdk.Duration.seconds(30),
-      memorySize: 256,
-      logGroup: apiLogGroup,
-      bundling: {
-        // Don't exclude AWS SDK v3 packages - bundle them
-        externalModules: [],
-        minify: true,
-        sourceMap: false,
-        // Force bundling of these packages to avoid runtime issues
-        nodeModules: ['@aws-sdk/client-dynamodb', '@aws-sdk/lib-dynamodb'],
-        target: 'node20',
-      },
-    });
-
-    // Delete User Lambda Function
-    const deleteUserFunction = new NodejsFunction(this, 'DeleteUserFunction', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'handler',
-      entry: 'src/lambda/delete-user.ts',
-      role: lambdaRole,
-      environment: {
-        LOG_LEVEL: isLocalStack ? 'DEBUG' : 'INFO',
-        DYNAMODB_TABLE_NAME: usersTable.tableName,
-        ...(isLocalStack && {
-          AWS_ENDPOINT_URL: 'http://host.docker.internal:4566',
-          DYNAMODB_ENDPOINT: 'http://host.docker.internal:4566',
-        }),
-      },
-      timeout: cdk.Duration.seconds(30),
-      memorySize: 256,
-      logGroup: apiLogGroup,
-      bundling: {
-        // Don't exclude AWS SDK v3 packages - bundle them
-        externalModules: [],
-        minify: true,
-        sourceMap: false,
-        // Force bundling of these packages to avoid runtime issues
-        nodeModules: ['@aws-sdk/client-dynamodb', '@aws-sdk/lib-dynamodb'],
-        target: 'node20',
-      },
-    });
-
-    // Health Check Lambda Function (for CI/CD and monitoring)
-    const healthFunction = new NodejsFunction(this, 'HealthFunction', {
+  private createHealthLambdaFunction(): NodejsFunction {
+    return new NodejsFunction(this, 'HealthFunction', {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'handler',
       entry: 'src/lambda/health.ts',
-      role: lambdaRole,
+      role: this.lambdaRole,
       environment: {
-        LOG_LEVEL: isLocalStack ? 'DEBUG' : 'INFO',
+        LOG_LEVEL: this.isLocalStack ? 'DEBUG' : 'INFO',
       },
       timeout: cdk.Duration.seconds(10),
       memorySize: 128,
-      logGroup: apiLogGroup,
+      logGroup: this.apiLogGroup,
       bundling: {
         externalModules: [],
         minify: true,
@@ -172,14 +163,15 @@ export class UserApiStack extends cdk.Stack {
         target: 'node20',
       },
     });
+  }
 
-    // API Gateway
-    const api = new apigateway.RestApi(this, 'UserApi', {
+  private createApiGateway(): apigateway.RestApi {
+    return new apigateway.RestApi(this, 'UserApi', {
       restApiName: 'User Management API',
       description: 'API for managing users with DynamoDB persistence',
       deployOptions: {
         stageName: 'prod',
-        accessLogDestination: new apigateway.LogGroupLogDestination(apiLogGroup),
+        accessLogDestination: new apigateway.LogGroupLogDestination(this.apiLogGroup),
         accessLogFormat: apigateway.AccessLogFormat.jsonWithStandardFields(),
         loggingLevel: apigateway.MethodLoggingLevel.INFO,
         dataTraceEnabled: true,
@@ -191,51 +183,85 @@ export class UserApiStack extends cdk.Stack {
         allowHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key'],
       },
     });
+  }
+
+  private setupApiRoutes(
+    api: apigateway.RestApi,
+    functions: {
+      createUserFunction: NodejsFunction;
+      getUserFunction: NodejsFunction;
+      deleteUserFunction: NodejsFunction;
+      healthFunction: NodejsFunction;
+    }
+  ): void {
+    // Health check endpoint
+    const healthResource = api.root.addResource('health');
+    healthResource.addMethod('GET', new apigateway.LambdaIntegration(functions.healthFunction));
 
     // Users resource
     const usersResource = api.root.addResource('users');
 
-    // GET /health - Health check endpoint
-    const healthResource = api.root.addResource('health');
-    healthResource.addMethod('GET', new apigateway.LambdaIntegration(healthFunction));
-
     // POST /users - Create user
-    usersResource.addMethod('POST', new apigateway.LambdaIntegration(createUserFunction), {
+    usersResource.addMethod('POST', new apigateway.LambdaIntegration(functions.createUserFunction), {
       requestValidatorOptions: {
         validateRequestBody: true,
         validateRequestParameters: false,
       },
     });
 
-    // GET /users/{id} - Get user by ID
+    // User by ID resource
     const userResource = usersResource.addResource('{id}');
-    userResource.addMethod('GET', new apigateway.LambdaIntegration(getUserFunction));
+    userResource.addMethod('GET', new apigateway.LambdaIntegration(functions.getUserFunction));
+    userResource.addMethod('DELETE', new apigateway.LambdaIntegration(functions.deleteUserFunction));
+  }
 
-    // DELETE /users/{id} - Delete user by ID
-    userResource.addMethod('DELETE', new apigateway.LambdaIntegration(deleteUserFunction));
-
-    // CloudWatch Dashboard for monitoring
+  private createMonitoringDashboard(
+    api: apigateway.RestApi,
+    functions: {
+      createUserFunction: NodejsFunction;
+      getUserFunction: NodejsFunction;
+      deleteUserFunction: NodejsFunction;
+      healthFunction: NodejsFunction;
+    }
+  ): void {
     const dashboard = new cdk.aws_cloudwatch.Dashboard(this, 'UserApiDashboard', {
       dashboardName: 'UserAPI-Monitoring',
     });
 
-    // Add Lambda metrics widgets
+    const { createUserFunction, getUserFunction, deleteUserFunction, healthFunction } = functions;
+
+    // Lambda metrics widgets
     dashboard.addWidgets(
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'Lambda Invocations',
-        left: [createUserFunction.metricInvocations(), getUserFunction.metricInvocations(), deleteUserFunction.metricInvocations(), healthFunction.metricInvocations()],
+        left: [
+          createUserFunction.metricInvocations(),
+          getUserFunction.metricInvocations(),
+          deleteUserFunction.metricInvocations(),
+          healthFunction.metricInvocations(),
+        ],
       }),
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'Lambda Errors',
-        left: [createUserFunction.metricErrors(), getUserFunction.metricErrors(), deleteUserFunction.metricErrors(), healthFunction.metricErrors()],
+        left: [
+          createUserFunction.metricErrors(),
+          getUserFunction.metricErrors(),
+          deleteUserFunction.metricErrors(),
+          healthFunction.metricErrors(),
+        ],
       }),
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'Lambda Duration',
-        left: [createUserFunction.metricDuration(), getUserFunction.metricDuration(), deleteUserFunction.metricDuration(), healthFunction.metricDuration()],
+        left: [
+          createUserFunction.metricDuration(),
+          getUserFunction.metricDuration(),
+          deleteUserFunction.metricDuration(),
+          healthFunction.metricDuration(),
+        ],
       })
     );
 
-    // Add API Gateway metrics
+    // API Gateway metrics widgets
     dashboard.addWidgets(
       new cdk.aws_cloudwatch.GraphWidget({
         title: 'API Gateway Requests',
@@ -250,30 +276,38 @@ export class UserApiStack extends cdk.Stack {
         left: [api.metricClientError(), api.metricServerError()],
       })
     );
+  }
 
-    // Outputs
+  private createOutputs(
+    api: apigateway.RestApi,
+    functions: {
+      createUserFunction: NodejsFunction;
+      getUserFunction: NodejsFunction;
+      deleteUserFunction: NodejsFunction;
+    }
+  ): void {
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: api.url,
       description: 'User API Gateway URL',
     });
 
     new cdk.CfnOutput(this, 'CreateUserFunctionName', {
-      value: createUserFunction.functionName,
+      value: functions.createUserFunction.functionName,
       description: 'Create User Lambda Function Name',
     });
 
     new cdk.CfnOutput(this, 'GetUserFunctionName', {
-      value: getUserFunction.functionName,
+      value: functions.getUserFunction.functionName,
       description: 'Get User Lambda Function Name',
     });
 
     new cdk.CfnOutput(this, 'DeleteUserFunctionName', {
-      value: deleteUserFunction.functionName,
+      value: functions.deleteUserFunction.functionName,
       description: 'Delete User Lambda Function Name',
     });
 
     new cdk.CfnOutput(this, 'DynamoDbTableName', {
-      value: usersTable.tableName,
+      value: this.usersTable.tableName,
       description: 'DynamoDB Users Table Name',
     });
   }
