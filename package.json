@@ -26,7 +26,7 @@
     "bootstrap": "source .env 2>/dev/null || true && cdk bootstrap",
     "local:start": "./scripts/development/local-dev.sh start",
     "local:stop": "./scripts/development/local-dev.sh stop",
-    "local:deploy": "npm run local:cdk -- deploy",
+    "local:deploy": "npm run local:cdk -- deploy --outputs-file cdk-outputs.json",
     "local:destroy": "npm run local:cdk -- destroy --force",
     "local:bootstrap": "npm run local:cdk -- bootstrap",
     "local:cdk": "source .env.local && cdklocal",

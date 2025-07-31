@@ -56,7 +56,7 @@ export default async function integrationGlobalSetup() {
 
       // If LocalStack is running, just deploy/update infrastructure
       console.log('🏗️  Deploying test infrastructure...');
-      await execAsync('npm run deploy:localstack', {
+      await execAsync('./scripts/deployment/deploy-localstack.sh deploy', {
         env: { ...process.env, NODE_ENV: process.env.NODE_ENV || 'test' }
       });
     } catch {

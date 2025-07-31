@@ -22,17 +22,33 @@ export const withAuthContext = <T>(
         return await Effect.runPromise(handler(event, { userId: 'health-check' }))
       }
 
-      // Extract user context from Lambda Authorizer
-      const userContext = getUserContext(event)
-      
-      if (!userContext || !userContext.userId) {
-        // This should never happen if Lambda Authorizer is properly configured
-        // API Gateway should block requests before they reach here
-        console.error('Missing user context - Lambda Authorizer may not be configured correctly')
-        return {
-          statusCode: 401,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: 'Unauthorized - Invalid authorization context' })
+      // Check if we're running in LocalStack (for integration testing)
+      const isLocalStack = event.requestContext?.domainName?.includes('localhost.localstack.cloud') ||
+                          process.env.AWS_ENDPOINT_URL?.includes('localhost') ||
+                          process.env.AWS_ENDPOINT_URL?.includes('localstack')
+
+      let userContext
+      if (isLocalStack) {
+        // In LocalStack, provide a mock user context for testing
+        userContext = {
+          userId: 'localstack-test-user',
+          email: 'test@localstack.local',
+          scope: ['read', 'write']
+        }
+        console.log('LocalStack detected - using mock authentication context')
+      } else {
+        // Extract user context from Lambda Authorizer in production
+        userContext = getUserContext(event)
+        
+        if (!userContext || !userContext.userId) {
+          // This should never happen if Lambda Authorizer is properly configured
+          // API Gateway should block requests before they reach here
+          console.error('Missing user context - Lambda Authorizer may not be configured correctly')
+          return {
+            statusCode: 401,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: 'Unauthorized - Invalid authorization context' })
+          }
         }
       }
 

@@ -21,6 +21,14 @@ check_docker() {
     fi
 }
 
+# Check if required tools are available
+check_tools() {
+    if ! command -v jq >/dev/null 2>&1; then
+        log_error "jq is required but not installed. Please install jq: brew install jq"
+        exit 1
+    fi
+}
+
 # Set LocalStack environment
 set_localstack_env() {
     log_info "Setting LocalStack environment variables..."
@@ -108,6 +116,60 @@ deploy_infrastructure() {
     log_success "Infrastructure deployed successfully"
 }
 
+# Export deployment environment variables for integration tests
+export_deployment_env() {
+    log_info "Exporting deployment environment variables..."
+    
+    local env_file="${PROJECT_DIR}/.env.deployment"
+    local cdk_outputs_file="${PROJECT_DIR}/cdk-outputs.json"
+    
+    if [[ ! -f "${cdk_outputs_file}" ]]; then
+        log_error "CDK outputs file not found: ${cdk_outputs_file}"
+        return 1
+    fi
+    
+    # Extract outputs from CDK outputs JSON
+    local api_url api_key
+    api_url=$(jq -r '.LocalUserApiStack.ApiUrl // .LocalUserApiStack.UserApiEndpoint22DD5314 // empty' "${cdk_outputs_file}")
+    api_key=$(jq -r '.LocalUserApiStack.ApiKeyOutput // empty' "${cdk_outputs_file}")
+    
+    if [[ -z "${api_url}" ]]; then
+        log_error "Failed to extract API URL from CDK outputs"
+        return 1
+    fi
+    
+    if [[ -z "${api_key}" ]]; then
+        log_error "Failed to extract API key from CDK outputs"
+        return 1
+    fi
+    
+    # Generate deployment environment file
+    cat > "${env_file}" << EOF
+# Deployment Environment Variables
+# Generated on: $(date)
+# Deployment Type: LocalStack
+
+# API Configuration
+export API_URL="${api_url}"
+export API_KEY="${api_key}"
+
+# Derived variables
+export API_BASE_URL="\${API_URL%/}"  # Remove trailing slash if present
+export API_HEALTH_URL="\${API_BASE_URL}/health"
+export API_USERS_URL="\${API_BASE_URL}/users"
+
+# Integration test variables
+export INTEGRATION_TEST_API_URL="\$API_URL"
+export INTEGRATION_TEST_API_KEY="\$API_KEY"
+export IS_LOCALSTACK=true
+export DEPLOYMENT_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+EOF
+    
+    log_success "Environment variables exported to: ${env_file}"
+    log_info "API URL: ${api_url}"
+    log_info "API Key: ${api_key}"
+}
+
 # Stop and remove services
 teardown_services() {
     log_info "Stopping and removing LocalStack services..."
@@ -164,9 +226,11 @@ case "${1:-deploy}" in
     "deploy")
         log_info "Starting LocalStack deployment..."
         check_docker
+        check_tools
         start_services
         bootstrap_cdk
         deploy_infrastructure
+        export_deployment_env
         show_info
         ;;
     "teardown")
