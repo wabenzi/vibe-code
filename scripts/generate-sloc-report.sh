@@ -179,7 +179,7 @@ echo "📝 Generating report..."
 cat > "${REPORT_FILE}" << EOF
 # AWS Serverless User API - Source Lines of Code (SLOC) Report
 
-Generated on: $TIMESTAMP
+Generated on: ${TIMESTAMP}
 
 ## Executive Summary
 
@@ -190,7 +190,7 @@ Generated on: $TIMESTAMP
 | **Infrastructure** | ${INFRA_COUNT} | ${INFRA_TOTAL} | ${INFRA_PERCENT}% |
 | **Configuration** | - | ${CONFIG_JS_TOTAL} | ${CONFIG_PERCENT}% |
 | **Scripts** | ${SCRIPTS_COUNT} | ${SCRIPTS_TOTAL} | - |
-| **TOTAL** | - | **$CORE_TOTAL** | 100% |
+| **TOTAL** | - | **${CORE_TOTAL}** | 100% |
 
 *Note: Configuration excludes package-lock.json and generated files*
 

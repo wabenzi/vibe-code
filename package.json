@@ -27,7 +27,7 @@
     "local:start": "./scripts/development/local-dev.sh start",
     "local:stop": "./scripts/development/local-dev.sh stop",
     "local:deploy": "npm run local:cdk -- deploy",
-    "local:destroy": "npm run local:cdk -- destroy",
+    "local:destroy": "npm run local:cdk -- destroy --force",
     "local:bootstrap": "npm run local:cdk -- bootstrap",
     "local:cdk": "source .env.local && cdklocal",
     "local:test": "./scripts/development/local-dev.sh test",

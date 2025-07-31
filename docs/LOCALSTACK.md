@@ -40,7 +40,7 @@ This project includes full LocalStack support for local development and contract
 ### LocalStack
 - **Port**: 4566
 - **Services**: Lambda, API Gateway, CloudWatch, IAM, STS
-- **Dashboard**: http://localhost:4566
+- **Dashboard**: <http://localhost:4566>
 
 ### PostgreSQL
 - **Port**: 5432

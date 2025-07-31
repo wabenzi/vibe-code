@@ -64,7 +64,7 @@ Removed service mocking test files to focus exclusively on AWS SDK mocking appro
 
 ## Test Results After Cleanup
 
-```
+```text
 Test Suites: 1 skipped, 12 passed, 12 of 13 total
 Tests:       1 skipped, 129 passed, 130 total
 ```

@@ -41,7 +41,8 @@ export class UserApiStack extends cdk.Stack {
 
     // Create API Gateway with Lambda Authorizer
     const api = this.createApiGateway();
-    const authorizer = this.createLambdaAuthorizer(api, authorizerFunction);
+    // Skip authorizer creation for LocalStack due to CloudFormation dependency issues
+    const authorizer = this.isLocalStack ? undefined : this.createLambdaAuthorizer(api, authorizerFunction);
     this.setupApiRoutes(api, {
       createUserFunction,
       getUserFunction,
@@ -288,7 +289,7 @@ export class UserApiStack extends cdk.Stack {
       deleteUserFunction: NodejsFunction;
       healthFunction: NodejsFunction;
     },
-    authorizer: apigateway.TokenAuthorizer
+    authorizer?: apigateway.TokenAuthorizer
   ): void {
     // Health check endpoint (no authentication required for monitoring)
     const healthResource = api.root.addResource('health');
@@ -296,29 +297,44 @@ export class UserApiStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.NONE,
     });
 
-    // Users resource (protected endpoints)
+    // Users resource (protected endpoints in production, open in LocalStack for testing)
     const usersResource = api.root.addResource('users');
 
-    // POST /users - Create user (requires JWT authorization)
-    usersResource.addMethod('POST', new apigateway.LambdaIntegration(functions.createUserFunction), {
+    // POST /users - Create user (requires JWT authorization in production)
+    const createUserMethodOptions: apigateway.MethodOptions = authorizer ? {
       authorizationType: apigateway.AuthorizationType.CUSTOM,
       authorizer: authorizer,
       requestValidatorOptions: {
         validateRequestBody: true,
         validateRequestParameters: false,
       },
-    });
+    } : {
+      authorizationType: apigateway.AuthorizationType.NONE,
+      requestValidatorOptions: {
+        validateRequestBody: true,
+        validateRequestParameters: false,
+      },
+    };
+    usersResource.addMethod('POST', new apigateway.LambdaIntegration(functions.createUserFunction), createUserMethodOptions);
 
-    // User by ID resource (protected endpoints)
+    // User by ID resource (protected endpoints in production, open in LocalStack for testing)
     const userResource = usersResource.addResource('{id}');
-    userResource.addMethod('GET', new apigateway.LambdaIntegration(functions.getUserFunction), {
+
+    const getUserMethodOptions: apigateway.MethodOptions = authorizer ? {
       authorizationType: apigateway.AuthorizationType.CUSTOM,
       authorizer: authorizer,
-    });
-    userResource.addMethod('DELETE', new apigateway.LambdaIntegration(functions.deleteUserFunction), {
+    } : {
+      authorizationType: apigateway.AuthorizationType.NONE,
+    };
+    userResource.addMethod('GET', new apigateway.LambdaIntegration(functions.getUserFunction), getUserMethodOptions);
+
+    const deleteUserMethodOptions: apigateway.MethodOptions = authorizer ? {
       authorizationType: apigateway.AuthorizationType.CUSTOM,
       authorizer: authorizer,
-    });
+    } : {
+      authorizationType: apigateway.AuthorizationType.NONE,
+    };
+    userResource.addMethod('DELETE', new apigateway.LambdaIntegration(functions.deleteUserFunction), deleteUserMethodOptions);
   }
 
   private createMonitoringDashboard(

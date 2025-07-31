@@ -1,0 +1,1 @@
+ disable=SC2311,SC2312 # Noisy checks for -e and error codes. Comment out this line if required

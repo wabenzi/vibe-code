@@ -22,6 +22,23 @@ async function waitForLocalStack(timeout = 60000): Promise<void> {
   throw new Error('LocalStack failed to start within timeout period');
 }
 
+async function deployLocalStack(): Promise<void> {
+  console.log('🐳 Starting LocalStack and deploying infrastructure...');
+
+  try {
+    // Deploy complete LocalStack infrastructure using the existing script
+    await execAsync('./scripts/deployment/deploy-localstack.sh deploy', {
+      env: { ...process.env, NODE_ENV: process.env.NODE_ENV || 'test' },
+      cwd: process.cwd()
+    });
+
+    console.log('✅ LocalStack deployment completed');
+  } catch (error) {
+    console.error('❌ LocalStack deployment failed:', error);
+    throw error;
+  }
+}
+
 export default async function integrationGlobalSetup() {
   console.log('🐳 Setting up integration test environment...');
   
@@ -32,16 +49,23 @@ export default async function integrationGlobalSetup() {
   }
   
   try {
-    // Check if LocalStack is running
+    // Check if LocalStack is already running
+    try {
+      await axios.get('http://localhost:4566/_localstack/health');
+      console.log('📋 LocalStack already running, checking infrastructure...');
+
+      // If LocalStack is running, just deploy/update infrastructure
+      console.log('🏗️  Deploying test infrastructure...');
+      await execAsync('npm run deploy:localstack', {
+        env: { ...process.env, NODE_ENV: process.env.NODE_ENV || 'test' }
+      });
+    } catch {
+      // LocalStack not running, do full deployment
+      await deployLocalStack();
+    }
+    
+    // Final health check and wait for infrastructure to be ready
     await waitForLocalStack();
-    
-    // Deploy infrastructure to LocalStack
-    console.log('🏗️  Deploying test infrastructure...');
-    await execAsync('npm run deploy:localstack', {
-      env: { ...process.env, NODE_ENV: process.env.NODE_ENV || 'test' }
-    });
-    
-    // Wait a bit for infrastructure to be ready
     await new Promise(resolve => setTimeout(resolve, 5000));
     
     console.log('✅ Integration test environment ready');

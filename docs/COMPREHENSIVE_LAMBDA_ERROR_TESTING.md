@@ -17,7 +17,7 @@ Successfully implemented comprehensive Lambda error testing covering all AWS Lam
 - **Test Categories**: 3 main categories with comprehensive error scenarios
 
 ### Test Results
-```
+```text
 ✓ DynamoDB Service Errors in Lambda Context (8 tests)
   - AccessDeniedException in CreateUser/GetUser Lambda
   - ThrottlingException in CreateUser Lambda  
