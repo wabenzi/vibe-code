@@ -109,10 +109,10 @@ curl -X POST https://your-api-gateway-url/users \
 
 ### Development Testing
 
-Use the test utilities in `src/lambda/utils/jwt-test-utils.ts`:
+Use the test utilities in `test/utils/jwt-test-utils.ts`:
 
 ```typescript
-import { createTestJWTToken, createAuthorizationHeader } from './jwt-test-utils'
+import { createTestJWTToken, createAuthorizationHeader } from '../../test/utils/jwt-test-utils'
 
 // Create test token
 const token = createTestJWTToken({
@@ -248,7 +248,7 @@ curl -H "Authorization: Bearer valid-jwt-token" https://your-api-gateway-url/use
 Use the test utilities to debug tokens:
 
 ```typescript
-import { verifyTestJWTToken } from './jwt-test-utils'
+import { verifyTestJWTToken } from '../../test/utils/jwt-test-utils'
 
 try {
   const decoded = verifyTestJWTToken(token)

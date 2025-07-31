@@ -281,6 +281,8 @@ This project maintains exceptional test coverage with comprehensive testing stra
 - **Branch Coverage**: 96.15%
 - **Total Test Files**: 29 across multiple categories
 
+> **Coverage Configuration**: This project uses Istanbul/nyc for code coverage analysis. When certain code paths cannot be meaningfully tested (e.g., AWS SDK client instantiation, environment-specific configurations), use `/* istanbul ignore next */` comments to exclude them from coverage requirements while maintaining overall quality standards.
+
 ### Test Categories
 ```bash
 # Run all tests

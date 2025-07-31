@@ -13,24 +13,19 @@ import { User, CreateUserRequest, UserNotFoundError } from "../domain/user"
 // AWS SDK will automatically use credentials from AWS profiles:
 // - "leonhardt" profile for AWS deployments
 // - "localstack" profile for LocalStack
-/* istanbul ignore next */
 const dynamoClientConfig: any = {
   region: process.env.AWS_REGION || 'us-west-2'
 }
 
 // If DYNAMODB_ENDPOINT is set (for LocalStack), add endpoint configuration
 // No need to set credentials - AWS SDK will use profile-based authentication
-/* istanbul ignore next */
 if (process.env.DYNAMODB_ENDPOINT) {
   dynamoClientConfig.endpoint = process.env.DYNAMODB_ENDPOINT
 }
 
-/* istanbul ignore next */
 const dynamoClient = new DynamoDBClient(dynamoClientConfig)
-/* istanbul ignore next */
 const docClient = DynamoDBDocumentClient.from(dynamoClient)
 
-/* istanbul ignore next */
 const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'users-table'
 
 export class DynamoUserRepositoryError extends Schema.TaggedError<DynamoUserRepositoryError>()(
@@ -60,7 +55,6 @@ export const DynamoUserRepository: UserRepository = {
 
     return Effect.tryPromise({
       try: () =>
-        /* istanbul ignore next */
         docClient.send(new PutCommand({
           TableName: TABLE_NAME,
           Item: {
@@ -83,7 +77,6 @@ export const DynamoUserRepository: UserRepository = {
   findById: (id: string) =>
     Effect.tryPromise({
       try: () =>
-        /* istanbul ignore next */
         docClient.send(new GetCommand({
           TableName: TABLE_NAME,
           Key: { id },
@@ -111,7 +104,6 @@ export const DynamoUserRepository: UserRepository = {
   findAll: () =>
     Effect.tryPromise({
       try: () =>
-        /* istanbul ignore next */
         docClient.send(new ScanCommand({
           TableName: TABLE_NAME,
         })),
@@ -121,7 +113,6 @@ export const DynamoUserRepository: UserRepository = {
       })
     }).pipe(
       Effect.map((result) =>
-        /* istanbul ignore next */
         (result.Items || []).map(item => 
           new User({
             id: item.id,
@@ -138,7 +129,6 @@ export const DynamoUserRepository: UserRepository = {
       Effect.flatMap(() =>
         Effect.tryPromise({
           try: () =>
-            /* istanbul ignore next */
             docClient.send(new DeleteCommand({
               TableName: TABLE_NAME,
               Key: { id },

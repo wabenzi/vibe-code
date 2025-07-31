@@ -30,7 +30,7 @@ The AWS Lambda Authorizer authentication strategy has been successfully implemen
 - **Environment Variables**: JWT configuration support
 - **IAM Permissions**: Proper permissions for authorizer execution
 
-### 5. Testing Utilities (`src/lambda/utils/jwt-test-utils.ts`)
+### 5. Testing Utilities (`test/utils/jwt-test-utils.ts`)
 - **Token Generation**: Create test JWT tokens for development
 - **Token Verification**: Validate JWT tokens in tests
 - **Predefined Users**: Test users with different roles and scopes
@@ -97,7 +97,7 @@ This will:
 ### 3. Testing JWT Authentication
 Use the test utilities to generate JWT tokens:
 ```typescript
-import { createTestJWTToken } from './src/lambda/utils/jwt-test-utils'
+import { createTestJWTToken } from './test/utils/jwt-test-utils'
 
 const token = createTestJWTToken({ 
   userId: 'admin-user',

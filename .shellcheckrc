@@ -1,1 +1,2 @@
- disable=SC2311,SC2312 # Noisy checks for -e and error codes. Comment out this line if required
+#disable=MD024,MD026 # Noisy markdown checks for multiple headings and trailing chars after headings
+disable=SC2311,SC2312,MD024,MD026 # Noisy shell checks for -e and error codes. Comment out this line if required

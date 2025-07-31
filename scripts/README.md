@@ -290,7 +290,7 @@ These scripts can be integrated into CI/CD pipelines:
 
 Each script is self-contained with its own configuration variables:
 - **AWS scripts**: Stack name "UserApiStack", region "us-west-2"
-- **LocalStack scripts**: URL "http://localhost:4566"
+- **LocalStack scripts**: URL "<http://localhost:4566>"
 - **Test scripts**: Auto-generated test user IDs, 30s timeouts
 - **Performance**: 5 requests for basic tests, 10 concurrent for load tests
 
