@@ -15,7 +15,7 @@ export const handleError = (error: unknown, sourceIp?: string): APIGatewayProxyR
       endpoint: 'unknown',
       timestamp: new Date().toISOString()
     })
-    
+
     return ApiResponse.unauthorized(error.message)
   }
 
@@ -27,7 +27,7 @@ export const handleError = (error: unknown, sourceIp?: string): APIGatewayProxyR
       endpoint: 'unknown',
       timestamp: new Date().toISOString()
     })
-    
+
     return ApiResponse.forbidden(error.message)
   }
 

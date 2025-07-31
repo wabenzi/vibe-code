@@ -365,7 +365,8 @@ describe('Comprehensive AWS DynamoDB Error Testing', () => {
         docClientMock.on(GetCommand).rejects(throughputError)
 
         // Act
-        const result = await Effect.runPromise(getUserHandler(event)) as APIGatewayProxyResult
+        const mockUserContext = { userId: 'test-user', scope: ['read', 'write'] }
+        const result = await Effect.runPromise(getUserHandler(event, mockUserContext)) as APIGatewayProxyResult
 
         // Assert
         expect(result.statusCode).toBe(500)
@@ -395,7 +396,8 @@ describe('Comprehensive AWS DynamoDB Error Testing', () => {
         docClientMock.on(GetCommand).rejects(accessError)
 
         // Act
-        const result = await Effect.runPromise(deleteUserHandler(event)) as APIGatewayProxyResult
+        const mockUserContext = { userId: 'test-user', scope: ['read', 'write'] }
+        const result = await Effect.runPromise(deleteUserHandler(event, mockUserContext)) as APIGatewayProxyResult
 
         // Assert
         expect(result.statusCode).toBe(500)

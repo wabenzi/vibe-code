@@ -91,7 +91,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const result = await Effect.runPromise(GetUserHandler(event)) as APIGatewayProxyResult
+      const result = await Effect.runPromise(GetUserHandler(event, { userId: 'test-user', scope: ['read', 'write'] })) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -256,7 +256,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const result = await Effect.runPromise(DeleteUserHandler(event)) as APIGatewayProxyResult
+      const result = await Effect.runPromise(DeleteUserHandler(event, { userId: 'test-user', scope: ['read', 'write'] })) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -295,7 +295,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const result = await Effect.runPromise(GetUserHandler(event)) as APIGatewayProxyResult
+      const result = await Effect.runPromise(GetUserHandler(event, { userId: 'test-user', scope: ['read', 'write'] })) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -334,7 +334,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const result = await Effect.runPromise(GetUserHandler(event)) as APIGatewayProxyResult
+      const result = await Effect.runPromise(GetUserHandler(event, { userId: 'test-user', scope: ['read', 'write'] })) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -460,7 +460,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const result = await Effect.runPromise(GetUserHandler(event)) as APIGatewayProxyResult
+      const result = await Effect.runPromise(GetUserHandler(event, { userId: 'test-user', scope: ['read', 'write'] })) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(400)
       expect(JSON.parse(result.body)).toEqual({
@@ -583,7 +583,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const getResult = await Effect.runPromise(GetUserHandler(getEvent)) as APIGatewayProxyResult
+      const getResult = await Effect.runPromise(GetUserHandler(getEvent, { userId: 'test-user', scope: ['read', 'write'] })) as APIGatewayProxyResult
 
       expect(getResult.statusCode).toBe(500)
       expect(JSON.parse(getResult.body)).toEqual({

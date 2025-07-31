@@ -42,7 +42,7 @@ log_error "❌ Deployment failed!"
 ## Example Output
 
 The updated script now produces consistently formatted output:
-```
+```text
 =======================================
 [SECTION] AWS Serverless User API - Deploy and Export
 =======================================

@@ -4,11 +4,11 @@ import { createUserService } from '../services/dynamo-user-service'
 import { ApiResponse } from './types/api-response'
 import { extractUserId } from './utils/validation'
 import { handleError } from './utils/error-handler'
-import { withSecurity } from './utils/security-middleware'
+import { withAuthContext } from './utils/auth-context-middleware'
 
 // Effect-based user deletion pipeline
-const deleteUserProgram = (event: APIGatewayProxyEvent, authenticatedUser?: string) => {
-  console.log('Delete User Lambda invoked', { event, authenticatedUser })
+const deleteUserProgram = (event: APIGatewayProxyEvent, userContext: { userId: string; email?: string; scope?: string[] }) => {
+  console.log('Delete User Lambda invoked', { event, authenticatedUser: undefined })
   
   return extractUserId(event).pipe(
     Effect.flatMap(userId => {
@@ -18,8 +18,8 @@ const deleteUserProgram = (event: APIGatewayProxyEvent, authenticatedUser?: stri
   )
 }
 
-const handlerLogic = (event: APIGatewayProxyEvent, authenticatedUser?: string) => {
-  return deleteUserProgram(event, authenticatedUser).pipe(
+const handlerLogic = (event: APIGatewayProxyEvent, userContext: { userId: string; email?: string; scope?: string[] }) => {
+  return deleteUserProgram(event, userContext).pipe(
     Effect.map(() => ApiResponse.noContent()),
     Effect.catchAll((error) => Effect.succeed(handleError(error))),
     Effect.scoped
@@ -30,4 +30,4 @@ const handlerLogic = (event: APIGatewayProxyEvent, authenticatedUser?: string) =
 export const deleteUserHandler = handlerLogic
 
 // Export the secured handler for production use
-export const handler = withSecurity(handlerLogic)
+export const handler = withAuthContext(handlerLogic)

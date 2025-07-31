@@ -1,15 +1,15 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 import { Effect } from 'effect'
-import { UserResponse } from '../domain/user'
+import { UserResponse, UserNotFoundError, ValidationError } from '../domain/user'
 import { createUserService } from '../services/dynamo-user-service'
 import { ApiResponse } from './types/api-response'
 import { extractUserId } from './utils/validation'
 import { handleError } from './utils/error-handler'
-import { withSecurity } from './utils/security-middleware'
+import { withAuthContext } from './utils/auth-context-middleware'
 
 // Effect-based user retrieval pipeline
-const getUserProgram = (event: APIGatewayProxyEvent, authenticatedUser?: string) => {
-  console.log('Get User Lambda invoked', { event, authenticatedUser })
+const getUserProgram = (event: APIGatewayProxyEvent, userContext: { userId: string; email?: string; scope?: string[] }) => {
+  console.log('Get User Lambda invoked', { event, authenticatedUser: undefined })
   
   return extractUserId(event).pipe(
     Effect.flatMap(userId => {
@@ -25,8 +25,8 @@ const getUserProgram = (event: APIGatewayProxyEvent, authenticatedUser?: string)
   )
 }
 
-const handlerLogic = (event: APIGatewayProxyEvent, authenticatedUser?: string) => {
-  return getUserProgram(event, authenticatedUser).pipe(
+const handlerLogic = (event: APIGatewayProxyEvent, userContext: { userId: string; email?: string; scope?: string[] }) => {
+  return getUserProgram(event, userContext).pipe(
     Effect.map(userResponse => ApiResponse.ok(userResponse)),
     Effect.catchAll((error) => Effect.succeed(handleError(error))),
     Effect.scoped
@@ -37,4 +37,4 @@ const handlerLogic = (event: APIGatewayProxyEvent, authenticatedUser?: string) =
 export const getUserHandler = handlerLogic
 
 // Export the secured handler for production use
-export const handler = withSecurity(handlerLogic)
+export const handler = withAuthContext(handlerLogic)

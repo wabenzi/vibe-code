@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+PROJECT_DIR="$(dirname "$(dirname "${SCRIPT_DIR}")")"
 
 # Source common logging functions
 # shellcheck disable=SC2034
@@ -26,7 +26,7 @@ set_localstack_env() {
     log_info "Setting LocalStack environment variables..."
     
     # Source environment variables from .env.local if it exists
-    if [ -f "${PROJECT_DIR}/.env.local" ]; then
+    if [[ -f "${PROJECT_DIR}/.env.local" ]]; then
         log_info "Loading environment from .env.local..."
         set -a  # automatically export all variables
         # shellcheck disable=SC1091
@@ -49,7 +49,7 @@ set_localstack_env() {
     export AWS_PAGER=""
     
     # Debug: Show key environment variables if DEBUG is enabled
-    if [ "${DEBUG:-false}" = "true" ] || [ "${LOG_LEVEL}" = "DEBUG" ]; then
+    if [[ "${DEBUG:-false}" = "true" ]] || [ "${LOG_LEVEL}" = "DEBUG" ]; then
         log_debug "Environment configuration:"
         log_debug "  AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}"
         log_debug "  CDK_DEFAULT_REGION: ${CDK_DEFAULT_REGION}"
@@ -75,7 +75,7 @@ start_services() {
     # Check LocalStack health
     local attempts=0
     local max_attempts=30
-    while [[ $attempts -lt $max_attempts ]]; do
+    while [[ ${attempts} -lt ${max_attempts} ]]; do
         if curl -s http://localhost:4566/_localstack/health >/dev/null 2>&1; then
             log_success "LocalStack is ready"
             break
@@ -85,7 +85,7 @@ start_services() {
         sleep 2
     done
     
-    if [[ $attempts -eq $max_attempts ]]; then
+    if [[ ${attempts} -eq ${max_attempts} ]]; then
         log_error "LocalStack failed to start"
         exit 1
     fi
@@ -202,7 +202,7 @@ case "${1:-deploy}" in
         orphaned_containers=$(docker ps -aq --filter "name=localstack" 2>/dev/null | wc -l)
         running_containers=$(docker ps -q --filter "name=localstack" 2>/dev/null | wc -l)
         
-        if [[ $orphaned_containers -gt $running_containers ]]; then
+        if [[ ${orphaned_containers} -gt ${running_containers} ]]; then
             log_warning "Found $((orphaned_containers - running_containers)) orphaned LocalStack container(s)"
             echo "Run '$0 cleanup' to remove orphaned containers"
         fi

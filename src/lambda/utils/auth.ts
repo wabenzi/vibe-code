@@ -30,14 +30,14 @@ export class AuthorizationError extends Error {
 export const authenticateRequest = (event: APIGatewayProxyEvent) => {
   // With Lambda Authorizer, the authorizer context contains user information
   const authorizerContext = event.requestContext.authorizer
-  
+
   if (!authorizerContext) {
     return Effect.fail(new AuthenticationError('No authorization context found'))
   }
 
   // Extract user ID from authorizer context
   const userId = authorizerContext.userId || authorizerContext.principalId
-  
+
   if (!userId) {
     return Effect.fail(new AuthenticationError('No user ID found in authorization context'))
   }
@@ -51,9 +51,10 @@ export const authenticateRequest = (event: APIGatewayProxyEvent) => {
  */
 export const authenticateWithApiKey = (event: APIGatewayProxyEvent) => {
   // Check for API key in headers (case-insensitive)
-  const apiKey = event.headers['x-api-key'] || 
-                 event.headers['X-API-Key'] || 
-                 event.headers['X-Api-Key']
+  const headers = event.headers || {}
+  const apiKey = headers['x-api-key'] ||
+                 headers['X-API-Key'] ||
+                 headers['X-Api-Key']
 
   if (!apiKey) {
     return Effect.fail(new AuthenticationError('API key is required'))
@@ -101,14 +102,14 @@ export const authorizeUserAccess = (
  */
 export const extractUserFromAuth = (event: APIGatewayProxyEvent): Effect.Effect<string, AuthorizationError> => {
   const authorizerContext = event.requestContext.authorizer
-  
+
   if (!authorizerContext) {
     return Effect.fail(new AuthorizationError('No authorization context found'))
   }
 
   const userId = authorizerContext.userId || authorizerContext.principalId
   const email = authorizerContext.email
-  
+
   if (!userId) {
     return Effect.fail(new AuthorizationError('Cannot extract user from authentication context'))
   }
@@ -121,7 +122,7 @@ export const extractUserFromAuth = (event: APIGatewayProxyEvent): Effect.Effect<
  */
 export const getUserContext = (event: APIGatewayProxyEvent) => {
   const authorizerContext = event.requestContext.authorizer
-  
+
   if (!authorizerContext) {
     return null
   }

@@ -87,7 +87,7 @@ export function createErrorResponse(
   
   // In production, use generic error messages for 5xx errors to prevent information disclosure
   const productionMessage = statusCode >= 500 ? 'Internal server error' : message
-  
+
   const body: ErrorResponseBody = {
     error,
     ...(isProduction ? { message: productionMessage } : { message }),

@@ -28,7 +28,7 @@ count_lines() {
     local pattern="$1"
     local exclude_pattern="${3:-}"
     
-    if [ -n "${exclude_pattern}" ]; then
+    if [[ -n "${exclude_pattern}" ]]; then
         find "${PROJECT_ROOT}" -name "${pattern}" | grep -v "${exclude_pattern}" | xargs wc -l 2>/dev/null | sort -nr || echo "0 total"
     else
         find "${PROJECT_ROOT}" -name "${pattern}" -print0 | xargs -0 wc -l 2>/dev/null | sort -nr || echo "0 total"
@@ -47,8 +47,8 @@ calculate_percentage() {
     local denominator="$2"
     local scale="${3:-1}"
     
-    if [ "${denominator}" -ne 0 ]; then
-        echo "scale=$scale; ${numerator} * 100 / ${denominator}" | bc -l
+    if [[ "${denominator}" -ne 0 ]]; then
+        echo "scale=${scale}; ${numerator} * 100 / ${denominator}" | bc -l
     else
         echo "0"
     fi
@@ -60,8 +60,8 @@ precise_divide() {
     local denominator="$2"
     local scale="${3:-2}"
     
-    if [ "${denominator}" -ne 0 ]; then
-        echo "scale=$scale; ${numerator} / ${denominator}" | bc -l
+    if [[ "${denominator}" -ne 0 ]]; then
+        echo "scale=${scale}; ${numerator} / ${denominator}" | bc -l
     else
         echo "0"
     fi
@@ -110,7 +110,7 @@ TEST_COUNT=$(find "${PROJECT_ROOT}/test" -name "*.ts" | wc -l)
 echo "    Found ${TEST_COUNT} test files, ${TEST_TOTAL} total lines"
 
 # Show test distribution preview
-if [ "${TEST_TOTAL}" -gt 0 ]; then
+if [[ "${TEST_TOTAL}" -gt 0 ]]; then
     echo "    📊 Test file distribution preview:"
     echo "      • Unit: $(find "${PROJECT_ROOT}/test/unit" -name "*.ts" 2>/dev/null | wc -l) files"
     echo "      • Integration: $(find "${PROJECT_ROOT}/test/integration" -name "*.ts" 2>/dev/null | wc -l) files"
@@ -156,7 +156,7 @@ echo "    Found ${SCRIPTS_COUNT} script files, ${SCRIPTS_TOTAL} total lines"
 # Calculate totals and percentages
 CORE_TOTAL=$((SRC_TOTAL + TEST_TOTAL + INFRA_TOTAL + CONFIG_JS_TOTAL + SCRIPTS_TOTAL))
 
-if [ "${CORE_TOTAL}" -eq 0 ]; then
+if [[ "${CORE_TOTAL}" -eq 0 ]]; then
     echo "❌ No code files found to analyze!"
     exit 1
 fi
@@ -167,7 +167,7 @@ INFRA_PERCENT=$(calculate_percentage "${INFRA_TOTAL}" "${CORE_TOTAL}" 1)
 CONFIG_PERCENT=$(calculate_percentage "${CONFIG_JS_TOTAL}" "${CORE_TOTAL}" 1)
 
 # Test-to-source ratio with high precision
-if [ "${SRC_TOTAL}" -eq 0 ]; then
+if [[ "${SRC_TOTAL}" -eq 0 ]]; then
     TEST_RATIO="∞"
 else
     TEST_RATIO=$(precise_divide "${TEST_TOTAL}" "${SRC_TOTAL}" 1)
@@ -205,7 +205,7 @@ EOF
 
 # Add source code breakdown
 echo "${SRC_OUTPUT}" | head -n -1 | while read -r line; do
-    if [ -n "${line}" ]; then
+    if [[ -n "${line}" ]]; then
         sloc=$(echo "${line}" | awk '{print $1}')
         file=$(echo "${line}" | awk '{for(i=2;i<=NF;i++) printf "%s ", $i; print ""}' | sed 's/^ *//' | sed 's/ *$//')
         filename=$(basename "${file}")
@@ -387,7 +387,7 @@ cat >> "${REPORT_FILE}" << EOF
 
 ### Test Coverage Ratio
 - **Test to Source Ratio**: ${TEST_RATIO}:1 (${TEST_TOTAL} test SLOC vs ${SRC_TOTAL} source SLOC)
-- **Test Coverage**: 100% statement coverage, 96.15% branch coverage
+- **Test Coverage**: 97.71% statement coverage, 86.45% branch coverage (Unit tests only - no LocalStack required)
 - **Test Distribution**: Unit ($(calculate_percentage "${UNIT_TESTS}" "${TEST_TOTAL}" 0)%), Integration ($(calculate_percentage "${INTEGRATION_TESTS}" "${TEST_TOTAL}" 0)%), Contract ($(calculate_percentage "${CONTRACT_TESTS}" "${TEST_TOTAL}" 0)%), Other ($(calculate_percentage "$((BEHAVIORAL_TESTS + UTILS_TESTS + SETUP_TESTS))" "${TEST_TOTAL}" 0)%)
 
 ### Architecture Distribution
@@ -413,8 +413,8 @@ cat >> "${REPORT_FILE}" << EOF
 ## Key Insights
 
 ### 🎯 Strengths
-1. **Exceptional Test Coverage**: ${TEST_RATIO}:1 test-to-source ratio with 100% statement coverage
-2. **Comprehensive Error Handling**: Extensive error scenario testing
+1. **Exceptional Test Coverage**: ${TEST_RATIO}:1 test-to-source ratio with 97.71% statement coverage
+2. **Comprehensive Unit Testing**: All coverage achieved through unit tests - no external dependencies required
 3. **Well-Structured Architecture**: Clear separation of concerns across layers
 4. **Infrastructure as Code**: Full CDK implementation with ${INFRA_TOTAL} SLOC
 5. **Contract Testing**: Proper API contract verification with Pact
@@ -430,13 +430,43 @@ cat >> "${REPORT_FILE}" << EOF
 - **Domain-Driven Design**: Clear domain models and bounded contexts
 - **Error-First Development**: Comprehensive error handling strategies
 - **Test-Driven Development**: Tests written before/alongside implementation
+- **Unit Test Coverage**: All coverage metrics achieved without external dependencies
+
+## Testing Strategy
+
+### 📊 Coverage Analysis (No LocalStack Required)
+```bash
+# Run unit tests for complete coverage analysis
+npm test -- --testPathPatterns="test/unit"
+
+# Or use the dedicated coverage command (includes unit tests only for coverage)
+npm run coverage
+```
+
+### 🔍 Test Categories and Their Purpose
+- **Unit Tests**: Provide all coverage metrics (97.71% statement coverage)
+- **Integration Tests**: Validate end-to-end functionality (require LocalStack)
+- **Contract Tests**: API contract verification with external services
+
+*Note: Coverage analysis only requires unit tests. Integration tests validate system behavior but don't contribute additional coverage.*
 
 ## Recommendations
 
 1. **Maintain Test Quality**: Continue the excellent test coverage ratio
-2. **Documentation**: Consider adding more inline documentation
-3. **Refactoring Opportunities**: Monitor file sizes for maintainability
-4. **Performance**: Monitor bundle sizes for Lambda functions
+2. **Unit Test Focus**: Use \`npm test -- --testPathPatterns="test/unit"\` for fast coverage analysis
+3. **Documentation**: Consider adding more inline documentation
+4. **Refactoring Opportunities**: Monitor file sizes for maintainability
+5. **Performance**: Monitor bundle sizes for Lambda functions
+6. **Integration Testing**: Run integration tests separately when LocalStack is available
+
+### Development Workflow
+```bash
+# Fast development cycle (unit tests only)
+npm test -- --testPathPatterns="test/unit" --coverage
+
+# Full validation (requires LocalStack)
+npm run test:integration
+```
 
 ---
 
@@ -463,4 +493,4 @@ echo "💡 Key Insights:"
 echo "  • Test coverage is $(if (( $(echo "${TEST_RATIO} > 5" | bc -l) )); then echo "excellent"; elif (( $(echo "${TEST_RATIO} > 2" | bc -l) )); then echo "good"; else echo "needs improvement"; fi) (${TEST_RATIO}:1 ratio)"
 echo "  • Code distribution: $(calculate_percentage "${TEST_TOTAL}" "${CORE_TOTAL}" 0)% tests, $(calculate_percentage "${SRC_TOTAL}" "${CORE_TOTAL}" 0)% source, $(calculate_percentage "${INFRA_TOTAL}" "${CORE_TOTAL}" 0)% infrastructure"
 echo ""
-echo "🚀 Run './scripts/generate-sloc-report.sh' to regenerate this report anytime!"
+echo "🚀 Run './scripts/generate-sloc-report.sh' to regenerate this report anytime\!"

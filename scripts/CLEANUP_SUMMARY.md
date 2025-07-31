@@ -8,7 +8,7 @@ Performed comprehensive cleanup and reorganization of the scripts directory to i
 ### 1. Directory Structure Reorganization
 Created logical subdirectories and moved scripts accordingly:
 
-```
+```text
 scripts/
 ├── README.md                    # Updated documentation
 ├── common-logging.sh           # Shared logging library

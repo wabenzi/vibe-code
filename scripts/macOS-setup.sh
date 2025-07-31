@@ -243,7 +243,7 @@ verify_installation() {
     if command_exists jq; then
         local jq_version
         jq_version=$(jq --version)
-        log_success "jq: $jq_version"
+        log_success "jq: ${jq_version}"
     else
         log_warning "jq not found (optional)"
     fi

@@ -233,7 +233,7 @@ npm run test:watch
 
 ## Test Results
 
-```
+```text
 Test Suites: 4 passed, 4 total
 Tests:       55 passed, 55 total
 Snapshots:   0 total

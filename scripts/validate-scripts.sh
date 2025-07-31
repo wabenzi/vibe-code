@@ -161,7 +161,7 @@ main() {
     local script
     while IFS= read -r script; do
         scripts+=("${script}")
-    done < <(get_scripts)
+    done < <(get_scripts) || true
     
     if [[ ${#scripts[@]} -eq 0 ]]; then
         log_error "No bash scripts found in ${SCRIPTS_DIR}"

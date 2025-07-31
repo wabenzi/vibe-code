@@ -160,7 +160,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
         pathParameters: null,
       })
 
-      const result: APIGatewayProxyResult = await Effect.runPromise(getUserHandler(event))
+      const mockUserContext = { userId: 'test-user', scope: ['read', 'write'] }
+      const result: APIGatewayProxyResult = await Effect.runPromise(getUserHandler(event, mockUserContext))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
@@ -174,7 +175,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
         pathParameters: { id: 'user/with/slashes' },
       })
 
-      const result: APIGatewayProxyResult = await Effect.runPromise(getUserHandler(event))
+      const mockUserContext = { userId: 'test-user', scope: ['read', 'write'] }
+      const result: APIGatewayProxyResult = await Effect.runPromise(getUserHandler(event, mockUserContext))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
@@ -194,7 +196,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
         pathParameters: null,
       })
 
-      const result: APIGatewayProxyResult = await Effect.runPromise(deleteUserHandler(event))
+      const mockUserContext = { userId: 'test-user', scope: ['read', 'write'] }
+      const result: APIGatewayProxyResult = await Effect.runPromise(deleteUserHandler(event, mockUserContext))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
@@ -208,7 +211,8 @@ describe('Lambda Handlers - Source Code Tests', () => {
         pathParameters: { id: 'user/with/slashes' },
       })
 
-      const result: APIGatewayProxyResult = await Effect.runPromise(deleteUserHandler(event))
+      const mockUserContext = { userId: 'test-user', scope: ['read', 'write'] }
+      const result: APIGatewayProxyResult = await Effect.runPromise(deleteUserHandler(event, mockUserContext))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)

@@ -28,12 +28,12 @@ else
 fi
 
 # Source existing environment files
-if [ -f "${PROJECT_ROOT}/.env.local" ]; then
+if [[ -f "${PROJECT_ROOT}/.env.local" ]]; then
     log_info "📂 Loading .env.local"
     source "${PROJECT_ROOT}/.env.local"
 fi
 
-if [ -f "${PROJECT_ROOT}/.env" ]; then
+if [[ -f "${PROJECT_ROOT}/.env" ]]; then
     log_info "📂 Loading .env"
     source "${PROJECT_ROOT}/.env"
 fi
@@ -43,7 +43,7 @@ log_section "🏗️  Deploying infrastructure..."
 DEPLOY_OUTPUT=$(cd "${PROJECT_ROOT}" && ${DEPLOY_CMD} --outputs-file cdk-outputs.json 2>&1)
 DEPLOY_EXIT_CODE=$?
 
-if [ ${DEPLOY_EXIT_CODE} -ne 0 ]; then
+if [[ ${DEPLOY_EXIT_CODE} -ne 0 ]]; then
     log_error "❌ Deployment failed!"
     echo "${DEPLOY_OUTPUT}"
     exit 1
@@ -52,7 +52,7 @@ fi
 log_success "✅ Deployment successful!"
 
 # Check if outputs file was created
-if [ ! -f "${PROJECT_ROOT}/cdk-outputs.json" ]; then
+if [[ ! -f "${PROJECT_ROOT}/cdk-outputs.json" ]]; then
     log_warning "⚠️  No outputs file generated, extracting from deploy output..."
     
     # Extract outputs from deploy output
@@ -75,24 +75,24 @@ else
     API_KEY=$(grep -o '"ApiKeyOutput": *"[^"]*"' "${PROJECT_ROOT}/cdk-outputs.json" | cut -d'"' -f4 | head -1)
     
     # Fallback: try with different stack naming
-    if [ -z "${API_URL}" ]; then
+    if [[ -z "${API_URL}" ]]; then
         API_URL=$(grep -o '"[^"]*ApiUrl[^"]*": *"[^"]*"' "${PROJECT_ROOT}/cdk-outputs.json" | cut -d'"' -f4 | head -1)
     fi
     
-    if [ -z "${API_KEY}" ]; then
+    if [[ -z "${API_KEY}" ]]; then
         API_KEY=$(grep -o '"[^"]*ApiKeyOutput[^"]*": *"[^"]*"' "${PROJECT_ROOT}/cdk-outputs.json" | cut -d'"' -f4 | head -1)
     fi
 fi
 
 # Validate we got the required values
-if [ -z "${API_URL}" ]; then
+if [[ -z "${API_URL}" ]]; then
     log_error "❌ Failed to extract API URL from deployment outputs"
     log_info "Deployment output:"
     echo "${DEPLOY_OUTPUT}"
     exit 1
 fi
 
-if [ -z "${API_KEY}" ]; then
+if [[ -z "${API_KEY}" ]]; then
     log_warning "⚠️  No API key found in outputs, using default"
     API_KEY="${API_KEY:-tr5ycwc5m3}"
 fi
@@ -102,7 +102,7 @@ log_info "📝 Creating deployment environment file..."
 cat > "${ENV_FILE}" << EOF
 # Deployment Environment Variables
 # Generated on: $(date)
-# Deployment Type: $([ "${IS_LOCAL}" = true ] && echo "LocalStack" || echo "AWS")
+# Deployment Type: $([[ "${IS_LOCAL}" = true ]] && echo "LocalStack" || echo "AWS")
 
 # API Configuration
 export API_URL="${API_URL}"

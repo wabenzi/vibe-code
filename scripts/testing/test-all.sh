@@ -64,10 +64,14 @@ load_test() {
     
     for _ in {1..10}; do
         (
-            local start_time=$(date +%s%3N)
-            local response=$(curl -s -w "%{http_code}" "${endpoint}" 2>/dev/null || echo "000")
-            local end_time=$(date +%s%3N)
-            local duration=$((end_time - start_time))
+            local start_time
+            start_time=$(date +%s%3N)
+            local response
+            response=$(curl -s -w "%{http_code}" "${endpoint}" 2>/dev/null || echo "000")
+            local end_time
+            end_time=$(date +%s%3N)
+            local duration
+            duration=$((end_time - start_time))
             
             if [[ "${response}" =~ 200$ ]]; then
                 echo "SUCCESS ${duration}" >> "${results_file}"
@@ -85,11 +89,14 @@ load_test() {
     
     # Analyze results
     if [ -f "${results_file}" ]; then
-        local successful=$(grep -c "SUCCESS" "${results_file}" 2>/dev/null || echo "0")
-        local failed=$(grep -c "FAILURE" "${results_file}" 2>/dev/null || echo "0")
+        local successful
+        successful=$(grep -c "SUCCESS" "${results_file}" 2>/dev/null || echo "0")
+        local failed
+        failed=$(grep -c "FAILURE" "${results_file}" 2>/dev/null || echo "0")
         
         if [ "${successful}" -gt 0 ]; then
-            local avg_time=$(grep "SUCCESS" "${results_file}" | awk '{sum+=$2} END {print int(sum/NR)}')
+            local avg_time
+            avg_time=$(grep "SUCCESS" "${results_file}" | awk '{sum+=$2} END {print int(sum/NR)}')
             log_success "${description} load test: ${successful}/10 successful, avg ${avg_time}ms"
         else
             log_error "${description} load test: 0/10 successful"
@@ -108,25 +115,32 @@ test_data_consistency() {
     
     log_info "Testing data consistency in ${environment}..."
     
-    local test_id="consistency-test-$(date +%s)"
+    local test_id
+    test_id="consistency-test-$(date +%s)"
     local test_name="Consistency Test User"
     
     # Create user
-    local create_response=$(curl -s -X POST \
+    local create_response
+    create_response=$(curl -s -X POST \
         "${api_url}/users" \
         -H "Content-Type: application/json" \
         -d "{\"id\":\"${test_id}\",\"name\":\"${test_name}\"}")
     
     # Immediate read-after-write
     sleep 1
-    local read_response=$(curl -s "${api_url}/users/${test_id}")
+    local read_response
+    read_response=$(curl -s "${api_url}/users/${test_id}")
     
     # Enhanced data consistency validation with jq
     if command -v jq >/dev/null 2>&1; then
-        local created_name=$(echo "${create_response}" | jq -r '.name // empty')
-        local read_name=$(echo "${read_response}" | jq -r '.name // empty')
-        local created_id=$(echo "${create_response}" | jq -r '.id // empty')
-        local read_id=$(echo "${read_response}" | jq -r '.id // empty')
+        local created_name
+        created_name=$(echo "${create_response}" | jq -r '.name // empty')
+        local read_name
+        read_name=$(echo "${read_response}" | jq -r '.name // empty')
+        local created_id
+        created_id=$(echo "${create_response}" | jq -r '.id // empty')
+        local read_id
+        read_id=$(echo "${read_response}" | jq -r '.id // empty')
         
         log_info "${environment} consistency check:"
         echo "  Create response: $(echo "${create_response}" | jq -c '.')"
@@ -169,7 +183,8 @@ test_aws_deployment() {
     fi
     
     # Get API URL for performance testing
-    local api_url=$(aws --no-cli-pager cloudformation describe-stacks \
+    local api_url
+    api_url=$(aws --no-cli-pager cloudformation describe-stacks \
         --stack-name "UserApiStack" \
         --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
         --output text 2>/dev/null)
@@ -207,7 +222,8 @@ test_localstack_deployment() {
 # Generate test report
 generate_report() {
     local start_time="$1"
-    local end_time=$(date +%s)
+    local end_time
+    end_time=$(date +%s)
     local duration=$((end_time - start_time))
     
     log_section "Test Report"
@@ -256,7 +272,8 @@ pre_deployment_checks() {
 
 # Main function
 main() {
-    local start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
     
     log_section "Comprehensive Deployment Test Runner"
     log_info "Starting comprehensive deployment tests..."
@@ -277,7 +294,8 @@ main() {
             ;;
         "performance")
             log_section "Performance Testing Only"
-            local api_url=$(aws --no-cli-pager cloudformation describe-stacks \
+            local api_url
+            api_url=$(aws --no-cli-pager cloudformation describe-stacks \
                 --stack-name "UserApiStack" \
                 --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
                 --output text 2>/dev/null)

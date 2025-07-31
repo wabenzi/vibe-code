@@ -4,7 +4,7 @@
 # Demonstrates all logging functions and features
 
 # Source common logging functions
-source "$(dirname "$(dirname "$0")")/common-logging.sh"
+source "$(dirname "$(dirname "${BASH_SOURCE[0]}")")/common-logging.sh"
 
 echo "Testing Common Logging Library"
 echo "=============================="
