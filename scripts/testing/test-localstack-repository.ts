@@ -1,5 +1,5 @@
-import { DynamoUserRepository } from '../src/infrastructure/dynamo-user-repository'
-import { CreateUserRequest } from '../src/domain/user'
+import { DynamoUserRepository } from '../../src/infrastructure/dynamo-user-repository'
+import { CreateUserRequest } from '../../src/domain/user'
 import { Effect } from 'effect'
 
 // Set environment variables for LocalStack

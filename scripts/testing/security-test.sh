@@ -115,6 +115,7 @@ echo "7. Testing rate limiting..."
 if [ "$API_KEY" != "your-api-key-here" ]; then
     echo "Sending 10 rapid requests to test rate limiting..."
     rate_limit_hit=false
+    # shellcheck disable=SC2034
     for i in {1..10}; do
         response=$(curl -s -w "%{http_code}" -H "X-API-Key: $API_KEY" -X GET "$API_URL/health" -o /dev/null)
         if [ "$response" -eq 429 ]; then
@@ -167,7 +168,7 @@ if [ "$API_KEY" != "your-api-key-here" ]; then
     
     injection_blocked=true
     for payload in "${injection_payloads[@]}"; do
-        encoded_payload=$(echo "$payload" | sed 's/ /%20/g')
+        encoded_payload="${payload// /%20/g}" #minimal encodng to allow injection
         response=$(curl -s -w "%{http_code}" -H "X-API-Key: $API_KEY" -X GET "$API_URL/users/$encoded_payload" -o /dev/null)
         if [ "$response" -eq 200 ]; then
             injection_blocked=false

@@ -25,6 +25,7 @@ if [ ! -f "${ENV_FILE}" ]; then
 fi
 
 echo "📂 Loading deployment environment from .env.deployment"
+# shellcheck disable=SC1090
 source "${ENV_FILE}"
 
 # Validate required environment variables

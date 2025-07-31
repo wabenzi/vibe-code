@@ -14,7 +14,7 @@ A TypeScript-based serverless REST API built with AWS CDK, Lambda functions, API
 
 ## 🏗️ Architecture
 
-```
+```text
 API Gateway → Lambda Functions → DynamoDB
      ↓              ↓              ↓
    REST API    Business Logic   Data Storage
@@ -359,7 +359,7 @@ The SLOC report provides:
 - **Quality insights** and recommendations
 - **Technology stack metrics**
 
-*Note: SLOC_REPORT.md is auto-generated and excluded from version control*
+Note: *SLOC_REPORT.md is auto-generated and excluded from version control*
 
 ## 📈 Monitoring
 
@@ -372,7 +372,7 @@ Monitor:
 
 ## 🗂️ Project Structure
 
-```
+```text
 ├── src/
 │   ├── domain/           # Domain models and schemas (48 SLOC)
 │   ├── infrastructure/   # Repository implementations (155 SLOC)

@@ -8,8 +8,10 @@ set -e
 # Source common logging functions
 # shellcheck disable=SC2034
 export LOG_PREFIX="DOCS"
-# shellcheck disable=SC1091
-source "$(dirname "$(dirname "$0")")/common-logging.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
+# shellcheck source=scripts/utils/common-logging.sh
+source "${PROJECT_DIR}/utils/common-logging.sh"
 
 OPENAPI_FILE="docs/openapi.yaml"
 

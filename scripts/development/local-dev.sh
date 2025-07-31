@@ -7,9 +7,10 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
+
 # Source common logging functions
-LOG_PREFIX="LOCAL-DEV"
-source "$(dirname "$(dirname "$0")")/common-logging.sh"
+# shellcheck source=scripts/utils/common-logging.sh
+LOG_PREFIX="LOCAL-DEV" source "${PROJECT_DIR}/utils/common-logging.sh"
 
 # Deploy to LocalStack
 
@@ -18,7 +19,7 @@ start_env() {
     log_info "Starting LocalStack development environment..."
     
     # Delegate to the comprehensive deployment script
-    "${SCRIPT_DIR}/../deployment/deploy-localstack.sh" deploy
+    "${SCRIPT_DIR}/../deployment/deploy-localstack.sh" "deploy"
     
     # Additional development-specific information
     log_info "LocalStack Dashboard: http://localhost:4566"

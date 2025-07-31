@@ -4,8 +4,11 @@
 # Demonstrates all logging functions and features
 
 # Source common logging functions
-SCRIPT_DIR="$(dirname "$(dirname "${BASH_SOURCE[0]}")")/common-logging.sh"
-source "${SCRIPT_DIR}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
+LOG_SCRIPT="${PROJECT_DIR}/utils/common-logging.sh"
+# shellcheck source=scripts/utils/common-logging.sh
+source "${LOG_SCRIPT}"
 
 echo "Testing Common Logging Library"
 echo "=============================="
@@ -35,18 +38,21 @@ echo
 
 # Test custom prefix
 echo "Testing custom LOG_PREFIX:"
-LOG_PREFIX="CUSTOM" source "${SCRIPT_DIR}"
+# shellcheck disable=SC1090
+LOG_PREFIX="CUSTOM" source "${LOG_SCRIPT}"
 log_info "This message has a custom prefix"
 echo
 
 # Test AWS prefix
-LOG_PREFIX="AWS" source "${SCRIPT_DIR}"
+# shellcheck disable=SC1090
+LOG_PREFIX="AWS" source "${LOG_SCRIPT}"
 log_info "This simulates AWS deployment logging"
 log_success "AWS operation completed"
 echo
 
 # Test LocalStack prefix
-LOG_PREFIX="LOCALSTACK" source "${SCRIPT_DIR}"
+# shellcheck disable=SC1090
+LOG_PREFIX="LOCALSTACK" source "${LOG_SCRIPT}"
 log_info "This simulates LocalStack deployment logging"
 log_success "LocalStack operation completed"
 echo

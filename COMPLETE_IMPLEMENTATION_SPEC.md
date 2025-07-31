@@ -230,7 +230,7 @@ validate_code_formatting()   # Prettier and ESLint compliance
 ## Implementation Guidance
 
 ### File Structure
-```
+```text
 src/
 ├── domain/user.ts          # Schema.Class models and tagged errors
 ├── services/user-service.ts # Business logic with Effect composition

@@ -14,8 +14,10 @@ set -e
 #set -x  # Enable debug mode
 
 # Source common logging functions
-LOG_PREFIX="TEST"
-source "$(dirname "$(dirname "$0")")/common-logging.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
+# shellcheck source=scripts/utils/common-logging.sh
+LOG_PREFIX="TEST" source "${PROJECT_DIR}/utils/common-logging.sh"
 
 # Configuration
 TEST_USER_ID="test-user-deployment-$(date +%s)"

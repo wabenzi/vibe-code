@@ -4,20 +4,20 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(dirname "$(dirname "${BASH_SOURCE[0]}")")"
 PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
 STACK_NAME="UserApiStack"
 DEFAULT_REGION="us-west-2"
 
 # Source common logging functions
-LOG_PREFIX="AWS"
-source "$(dirname "$(${BASH_SOURCE[0]})")/common-logging.sh"
+# shellcheck source=scripts/utils/common-logging.sh
+LOG_PREFIX="AWS" source "${PROJECT_DIR}/utils/common-logging.sh"
 
 get_account_id() {
     aws sts get-caller-identity --query Account --output text
 }
 get_region() {
-    aws configure get region || echo "${DEFAULT_REGION}" 
+    aws configure get region || echo "${DEFAULT_REGION}"
 }
 
 # Set AWS environment (clear LocalStack variables)

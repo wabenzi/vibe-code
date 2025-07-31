@@ -4,7 +4,7 @@
 # Source this file in your scripts to use consistent logging functions
 #
 # Usage:
-#   source "$(dirname "$0")/common-logging.sh"
+#   source "${BASH_SOURCE[0]}/common-logging.sh"
 #   log_info "Your message here"
 #   log_success "Operation completed"
 #   log_warning "Warning message"
@@ -13,7 +13,7 @@
 #
 # Advanced Usage:
 #   # Custom prefix for script-specific logging
-#   LOG_PREFIX="AWS" source "$(dirname "$0")/common-logging.sh"
+#   LOG_PREFIX="AWS" source "${BASH_SOURCE[0]}/common-logging.sh"
 #   log_info "This will show [AWS] prefix"
 #
 #   # Debug logging (only shows when DEBUG=true)

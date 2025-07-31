@@ -6,7 +6,7 @@ The `deploy-and-export.sh` script has been updated to use the common logging lib
 
 ## Before vs After
 
-### Before (Custom Logging):
+### Before (Custom Logging)
 ```bash
 # Colors for output
 RED='\033[0;31m'
@@ -20,11 +20,11 @@ echo -e "${GREEN}✅ Deployment successful!${NC}"
 echo -e "${RED}❌ Deployment failed!${NC}"
 ```
 
-### After (Common Logging Library):
+### After (Common Logging Library)
 ```bash
 # Set custom log prefix and source common logging library
 export LOG_PREFIX="DEPLOY"
-source "$(dirname "$0")/common-logging.sh"
+source "${BASH_SOURCE[0]}/common-logging.sh"
 
 log_header "AWS Serverless User API - Deploy and Export"
 log_success "✅ Deployment successful!"
@@ -41,7 +41,7 @@ log_error "❌ Deployment failed!"
 
 ## Example Output
 
-The updated script now produces consistently formatted output:
+The updated script now produces consistently formatted output
 ```text
 =======================================
 [SECTION] AWS Serverless User API - Deploy and Export
@@ -52,7 +52,7 @@ The updated script now produces consistently formatted output:
 [DEPLOY] 📄 Reading outputs from cdk-outputs.json
 [SUCCESS] ✅ Environment variables exported to: .env.deployment
 =======================================
-[SECTION] 📊 Deployment Summary:
+[SECTION] 📊 Deployment Summary
 [DEPLOY]   🌐 API URL: https://api.example.com
 [DEPLOY]   🔑 API Key: tr5ycwc5m3
 [DEPLOY]   🏠 Environment: AWS
@@ -62,7 +62,7 @@ The updated script now produces consistently formatted output:
 
 ## Other Scripts That Need Updates
 
-Based on code analysis, these scripts still use custom echo-based logging:
+Based on code analysis, these scripts still use custom echo-based logging
 
 1. **`macOS-setup.sh`** - Has custom success/warning/error functions
 2. **`security-test-deployment.sh`** - Uses extensive color-coded echo statements
@@ -77,14 +77,14 @@ Based on code analysis, these scripts still use custom echo-based logging:
 
 ## Implementation Pattern
 
-For any script that needs logging, use this pattern:
+For any script that needs logging, use this pattern
 
 ```bash
 #!/bin/bash
 
 # Set custom log prefix and source common logging library
 export LOG_PREFIX="SCRIPT_NAME"
-source "$(dirname "$0")/common-logging.sh"
+source "${BASH_SOURCE[0]}/common-logging.sh"
 
 # Your script logic here
 log_header "Script Title"

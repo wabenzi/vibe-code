@@ -17,7 +17,7 @@ The authorizer function validates JWT tokens and returns IAM policies for API Ga
 - **Output**: IAM policy allowing/denying access
 - **Context**: User information passed to protected Lambda functions
 
-#### Key Features:
+#### Key Features
 - JWT validation with configurable secret, audience, and issuer
 - IAM policy generation based on token validation
 - User context forwarding to protected endpoints

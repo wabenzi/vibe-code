@@ -15,7 +15,7 @@
 - ✅ PostgreSQL local development setup
 - ✅ Comprehensive documentation
 
-**Production API**: https://yz7ny3fa5b.execute-api.us-west-2.amazonaws.com/prod/
+**Production API**: <https://yz7ny3fa5b.execute-api.us-west-2.amazonaws.com/prod/>
 
 ### Recovery Commands
 

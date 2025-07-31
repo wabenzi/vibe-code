@@ -6,8 +6,10 @@
 set -e
 
 # Source common logging functions
-LOG_PREFIX="TEST-ALL"
-source "$(dirname "$(dirname "$0")")/common-logging.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
+# shellcheck source=scripts/utils/common-logging.sh
+LOG_PREFIX="TEST-ALL" source "${PROJECT_DIR}/utils/common-logging.sh"
 
 log_section() {
     echo -e "\033[0;35m[SECTION]\033[0m $1"
@@ -91,8 +93,8 @@ load_test() {
     if [ -f "${results_file}" ]; then
         local successful
         successful=$(grep -c "SUCCESS" "${results_file}" 2>/dev/null || echo "0")
-        local failed
-        failed=$(grep -c "FAILURE" "${results_file}" 2>/dev/null || echo "0")
+        # local failed
+        # failed=$(grep -c "FAILURE" "${results_file}" 2>/dev/null || echo "0")
         
         if [ "${successful}" -gt 0 ]; then
             local avg_time

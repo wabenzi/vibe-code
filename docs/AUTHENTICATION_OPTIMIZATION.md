@@ -6,11 +6,11 @@ You're absolutely correct! With AWS Lambda Authorizer in place, using `withSecur
 
 ## Before: Redundant Authentication
 
-```
+```text
 API Gateway → Lambda Authorizer (validates JWT) → Target Lambda → withSecurity (validates again)
 ```
 
-### Issues:
+### Issues
 - **Double validation**: JWT validated twice
 - **Performance overhead**: Unnecessary processing in each Lambda
 - **Complex error handling**: Authentication logic in multiple places
@@ -18,11 +18,11 @@ API Gateway → Lambda Authorizer (validates JWT) → Target Lambda → withSecu
 
 ## After: Optimized Architecture
 
-```
+```text
 API Gateway → Lambda Authorizer (validates JWT) → Target Lambda (trusts authorizer)
 ```
 
-### Benefits:
+### Benefits
 - **Single validation**: JWT validated once at API Gateway level
 - **Better performance**: No redundant authentication logic
 - **Cleaner separation**: Authentication at gateway, business logic in Lambda
@@ -69,7 +69,7 @@ export const handler = withAuthContext(handlerLogic) // Just context extraction
 
 ## Request Flow Comparison
 
-### Before (Redundant):
+### Before (Redundant)
 1. **API Gateway** receives request with `Authorization: Bearer <token>`
 2. **Lambda Authorizer** validates JWT, generates IAM policy
 3. **API Gateway** enforces policy (Allow/Deny)
@@ -77,7 +77,7 @@ export const handler = withAuthContext(handlerLogic) // Just context extraction
 5. **withSecurity middleware** validates authentication AGAIN 🔄
 6. **Business logic** executes
 
-### After (Optimized):
+### After (Optimized)
 1. **API Gateway** receives request with `Authorization: Bearer <token>`
 2. **Lambda Authorizer** validates JWT, generates IAM policy + context
 3. **API Gateway** enforces policy (Allow/Deny)
@@ -87,13 +87,13 @@ export const handler = withAuthContext(handlerLogic) // Just context extraction
 
 ## Security Benefits
 
-### Lambda Authorizer Advantages:
+### Lambda Authorizer Advantages
 - **Centralized authentication**: One place to handle JWT validation
 - **Caching**: API Gateway caches authorizer results for performance
 - **IAM integration**: Uses standard AWS IAM policies
 - **Fail-fast**: Requests rejected at gateway level, not in Lambda
 
-### Context Enrichment:
+### Context Enrichment
 ```typescript
 // Rich user context available in Lambda
 const userContext = {
@@ -106,13 +106,13 @@ const userContext = {
 
 ## Performance Impact
 
-### Before:
+### Before
 - **JWT validation**: 2x (Authorizer + Lambda)
 - **Network calls**: Potential additional validation calls
 - **Memory usage**: Security middleware in every Lambda
 - **Cold starts**: Security middleware initialization overhead
 
-### After:
+### After
 - **JWT validation**: 1x (Authorizer only)
 - **Network calls**: None for authentication
 - **Memory usage**: Minimal context extraction only
@@ -137,7 +137,7 @@ const userContext = {
 
 ## Testing Impact
 
-### Unit Testing:
+### Unit Testing
 ```typescript
 // Easier to test - just pass user context
 export const createUserHandler = (event: APIGatewayProxyEvent, authenticatedUser?: string) => {
@@ -150,14 +150,14 @@ export const createUserHandler = (event: APIGatewayProxyEvent, authenticatedUser
 }
 ```
 
-### Integration Testing:
+### Integration Testing
 - Test Lambda Authorizer separately
 - Test business logic with mock context
 - More focused, faster tests
 
 ## Conclusion
 
-Your observation is spot-on! The `withSecurity` middleware was indeed redundant once we implemented AWS Lambda Authorizer. The optimized architecture:
+Your observation is spot-on! The `withSecurity` middleware was indeed redundant once we implemented AWS Lambda Authorizer. The optimized architecture
 
 1. **Eliminates redundancy** - Single point of authentication
 2. **Improves performance** - No double validation

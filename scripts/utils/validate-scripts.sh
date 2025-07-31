@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 # Script Validation Test - Comprehensive testing for all bash scripts
 # This script validates syntax and runs shellcheck against all scripts in the project
@@ -13,10 +13,12 @@
 set -e
 
 # Source common logging functions
-source "$(dirname "$0")/common-logging.sh"
+SCRIPT_DIR="$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")"
+# shellcheck source=scripts/utils/common-logging.sh
+source "${SCRIPT_DIR}/utils/common-logging.sh"
+
 
 # Configuration
-SCRIPTS_DIR="$(dirname "$0")"
 VERBOSE=false
 FIX_PERMISSIONS=false
 
@@ -31,6 +33,11 @@ while [[ $# -gt 0 ]]; do
             FIX_PERMISSIONS=true
             shift
             ;;
+        --debug)
+            # shellcheck disable=SC2034
+            DEBUG=true
+            shift
+            ;;
         --help|-h)
             # Show help and exit
             cat << 'EOF'
@@ -41,6 +48,7 @@ Usage: $0 [--verbose] [--fix-permissions]
 Options:
   --verbose         Show detailed output for each test
   --fix-permissions Automatically fix script permissions (chmod +x)
+  --debug           Enable debug output
   --help, -h        Show this help message
 
 This script will:
@@ -78,7 +86,7 @@ check_shellcheck() {
 
 # Get all bash scripts in the scripts directory
 get_scripts() {
-    find "${SCRIPTS_DIR}" -name "*.sh" -type f | sort
+  find "${SCRIPT_DIR}" -name "*.sh" -type f | sort
 }
 
 # Check if script has execute permissions
@@ -156,7 +164,9 @@ test_shellcheck() {
 # Main validation function
 main() {
     log_header "Script Validation Test Suite"
-    
+    log_debug "Script directory: ${SCRIPT_DIR}"
+    log_debug "Scripts: $(get_scripts)"
+
     local scripts=()
     local script
     while IFS= read -r script; do
@@ -164,7 +174,7 @@ main() {
     done < <(get_scripts) || true
     
     if [[ ${#scripts[@]} -eq 0 ]]; then
-        log_error "No bash scripts found in ${SCRIPTS_DIR}"
+        log_error "No bash scripts found in ${SCRIPT_DIR}"
         exit 1
     fi
     

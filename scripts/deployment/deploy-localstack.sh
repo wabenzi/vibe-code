@@ -10,8 +10,8 @@ PROJECT_DIR="$(dirname "$(dirname "${SCRIPT_DIR}")")"
 # Source common logging functions
 # shellcheck disable=SC2034
 LOG_PREFIX="LOCALSTACK"
-# shellcheck disable=SC1091
-source "$(dirname "$(dirname "$0")")/common-logging.sh"
+# shellcheck source=scripts/utils/common-logging.sh
+source "${PROJECT_DIR}/utils/common-logging.sh"
 
 # Check if Docker is running
 check_docker() {

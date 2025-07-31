@@ -4,7 +4,7 @@ This directory contains deployment, testing, and development scripts for the AWS
 
 ## Directory Structure
 
-```
+```text
 scripts/
 ├── README.md                    # This documentation
 ├── common-logging.sh           # Shared logging library
@@ -29,10 +29,10 @@ scripts/
 
 All scripts use a common logging library (`common-logging.sh`) for consistent output formatting and better debugging.
 
-### Usage Example:
+### Usage Example
 ```bash
 # Source the logging library with custom prefix
-LOG_PREFIX="AWS" source "$(dirname "$0")/common-logging.sh"
+LOG_PREFIX="AWS" source "${BASH_SOURCE[0]}/common-logging.sh"
 
 # Use logging functions
 log_info "Starting operation"
@@ -50,7 +50,7 @@ log_footer "Section completed successfully"
 
 ## Script Validation
 
-Use `validate-scripts.sh` to check all bash scripts for syntax errors and shellcheck issues:
+Use `validate-scripts.sh` to check all bash scripts for syntax errors and shellcheck issues
 
 ```bash
 # Basic validation
@@ -66,7 +66,7 @@ Use `validate-scripts.sh` to check all bash scripts for syntax errors and shellc
 ./scripts/validate-scripts.sh --help
 ```
 
-### Validation Features:
+### Validation Features
 - ✅ **Syntax Check**: Validates bash syntax using `bash -n`
 - ✅ **Shellcheck Analysis**: Runs shellcheck for best practices and potential issues
 - ✅ **Permission Check**: Ensures scripts are executable
@@ -163,7 +163,7 @@ npm run test:all:performance
 
 ## Test Process Flow
 
-### AWS Deployment Test Process:
+### AWS Deployment Test Process
 1. **Pre-checks**: Verify AWS CLI, dependencies, stack status
 2. **Get API URL**: Extract from CloudFormation outputs
 3. **Cleanup**: Remove any existing test users
@@ -173,7 +173,7 @@ npm run test:all:performance
 7. **Error Testing**: Test non-existent user handling
 8. **Cleanup**: Remove test data
 
-### LocalStack Test Process:
+### LocalStack Test Process
 1. **Check LocalStack**: Verify service is running
 2. **Get API URL**: Extract from LocalStack API Gateway
 3. **Create User**: Test via LocalStack endpoints
@@ -181,14 +181,14 @@ npm run test:all:performance
 5. **Verify Persistence**: Check LocalStack DynamoDB
 6. **Cleanup**: Remove test data
 
-### Performance Testing:
+### Performance Testing
 - **Response Time**: Measures average API response time
 - **Load Testing**: 10 concurrent requests
 - **Data Consistency**: Read-after-write validation
 
 ## Test Data
 
-Each test run creates unique test users to avoid conflicts:
+Each test run creates unique test users to avoid conflicts
 - **User ID**: `test-user-{environment}-{timestamp}`
 - **User Name**: `Test User {Environment}`
 
@@ -196,18 +196,18 @@ Test data is automatically cleaned up after each test run.
 
 ## Requirements
 
-### Dependencies:
+### Dependencies
 - `aws` CLI configured with appropriate credentials
 - `curl` for HTTP requests
 - `jq` for JSON parsing (recommended but optional)
 - `bash` shell environment
 
-### AWS Permissions Required:
+### AWS Permissions Required
 - CloudFormation read access
 - API Gateway invoke permissions
 - DynamoDB read/write access to `users-table`
 
-### LocalStack Requirements:
+### LocalStack Requirements
 - LocalStack running on `http://localhost:4566`
 - LocalStack DynamoDB and API Gateway services
 
@@ -243,7 +243,7 @@ Test data is automatically cleaned up after each test run.
 
 ## Troubleshooting
 
-### Common Issues:
+### Common Issues
 
 1. **AWS CLI not configured**
    ```bash
@@ -275,7 +275,7 @@ Test data is automatically cleaned up after each test run.
 
 ## Integration with CI/CD
 
-These scripts can be integrated into CI/CD pipelines:
+These scripts can be integrated into CI/CD pipelines
 
 ```yaml
 # Example GitHub Actions
@@ -288,7 +288,7 @@ These scripts can be integrated into CI/CD pipelines:
 
 ## Configuration
 
-Each script is self-contained with its own configuration variables:
+Each script is self-contained with its own configuration variables
 - **AWS scripts**: Stack name "UserApiStack", region "us-west-2"
 - **LocalStack scripts**: URL "<http://localhost:4566>"
 - **Test scripts**: Auto-generated test user IDs, 30s timeouts
@@ -316,7 +316,7 @@ All scripts use a unified logging system provided by `common-logging.sh` for con
 
 ```bash
 # Source the library in your script
-source "$(dirname "$0")/common-logging.sh"
+source "${BASH_SOURCE[0]}/common-logging.sh"
 
 # Basic logging
 log_info "Starting process..."
@@ -325,7 +325,7 @@ log_warning "Configuration issue detected"
 log_error "Failed to connect"
 
 # Custom prefix (before sourcing)
-LOG_PREFIX="AWS" source "$(dirname "$0")/common-logging.sh"
+LOG_PREFIX="AWS" source "${BASH_SOURCE[0]}/common-logging.sh"
 log_info "This shows [AWS] prefix"
 
 # Debug logging
@@ -340,7 +340,7 @@ log_footer "Deployment completed successfully"
 
 ### Testing the Logging Library
 
-Run the comprehensive test script to see all logging functions in action:
+Run the comprehensive test script to see all logging functions in action
 
 ```bash
 ./scripts/testing/test-logging.sh
