@@ -51,13 +51,23 @@ export const HttpStatusName = {
 } as const
 
 /**
- * Standard headers for API responses
+ * Standard headers for API responses with security headers
  */
 const DEFAULT_HEADERS = {
   'Content-Type': 'application/json',
-  'Access-Control-Allow-Origin': '*',
+  // Fixed CORS vulnerability - restrict origins based on environment
+  'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGINS || 
+    (process.env.NODE_ENV === 'production' ? 'https://yourdomain.com' : 'http://localhost:3000'),
   'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-  'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+  'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
+  'Access-Control-Allow-Credentials': 'true',
+  // Security headers
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Content-Security-Policy': "default-src 'self'",
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
 } as const
 
 /**
@@ -68,15 +78,19 @@ export function createErrorResponse(
   message?: string,
   details?: Record<string, any> | string[]
 ): APIGatewayProxyResult {
-  // Check if we should suppress error details for production security
-  const suppressDetails = process.env.SUPPRESS_ERROR_DETAILS === 'true'
+  // Enhanced production security - suppress details in production
+  const isProduction = process.env.NODE_ENV === 'production'
+  const suppressDetails = isProduction || process.env.SUPPRESS_ERROR_DETAILS === 'true'
   
   // Look up the standard HTTP status description
   const error = HttpStatusName[statusCode as keyof typeof HttpStatusName] || 'Unknown Error'
   
+  // In production, use generic error messages for 5xx errors to prevent information disclosure
+  const productionMessage = statusCode >= 500 ? 'Internal server error' : message
+  
   const body: ErrorResponseBody = {
     error,
-    ...(message && { message }),
+    ...(isProduction ? { message: productionMessage } : { message }),
     ...(details && !suppressDetails && { details }),
   }
 

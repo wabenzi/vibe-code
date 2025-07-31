@@ -46,7 +46,7 @@ check_homebrew() {
         
         # Add Homebrew to PATH for Apple Silicon Macs
         if [[ $(uname -m) == 'arm64' ]]; then
-            echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
+            echo "eval \"\$(/opt/homebrew/bin/brew shellenv)\"" >> ~/.zprofile
             eval "$(/opt/homebrew/bin/brew shellenv)"
         fi
         
@@ -72,12 +72,12 @@ install_system_dependencies() {
     )
     
     for dep in "${deps[@]}"; do
-        log_info "Installing $dep..."
-        if brew list "$dep" >/dev/null 2>&1; then
-            log_success "$dep is already installed"
+        log_info "Installing ${dep}..."
+        if brew list "${dep}" >/dev/null 2>&1; then
+            log_success "${dep} is already installed"
         else
-            brew install "$dep"
-            log_success "$dep installed successfully"
+            brew install "${dep}"
+            log_success "${dep} installed successfully"
         fi
     done
     
@@ -100,9 +100,9 @@ install_global_packages() {
     )
     
     for package in "${packages[@]}"; do
-        log_info "Installing $package globally..."
-        npm install -g "$package"
-        log_success "$package installed globally"
+        log_info "Installing ${package} globally..."
+        npm install -g "${package}"
+        log_success "${package} installed globally"
     done
 }
 
@@ -126,9 +126,11 @@ setup_aws_cli() {
         echo "  aws configure sso"
         echo ""
     else
-        local account_id=$(aws sts get-caller-identity --query Account --output text)
-        local region=$(aws configure get region || echo "default")
-        log_success "AWS CLI is configured (Account: $account_id, Region: $region)"
+        local account_id
+        account_id=$(aws sts get-caller-identity --query Account --output text)
+        local region
+        region=$(aws configure get region || echo "default")
+        log_success "AWS CLI is configured (Account: ${account_id}, Region: ${region})"
     fi
 }
 
@@ -136,7 +138,7 @@ setup_aws_cli() {
 install_project_dependencies() {
     log_info "Installing project dependencies..."
     
-    if [ ! -f "package.json" ]; then
+    if [[ ! -f "package.json" ]]; then
         log_error "package.json not found. Make sure you're in the project root directory."
         exit 1
     fi
@@ -154,10 +156,12 @@ bootstrap_cdk() {
     log_info "Checking CDK bootstrap status..."
     
     if aws sts get-caller-identity >/dev/null 2>&1; then
-        local account_id=$(aws sts get-caller-identity --query Account --output text)
-        local region=$(aws configure get region || echo "us-west-2")
+        local account_id
+        account_id=$(aws sts get-caller-identity --query Account --output text)
+        local region
+        region=$(aws configure get region || echo "us-west-2")
         
-        log_info "Bootstrapping CDK for account $account_id in region $region..."
+        log_info "Bootstrapping CDK for account ${account_id} in region ${region}..."
         log_warning "This is required once per AWS account/region combination"
         
         if cdk bootstrap; then
@@ -179,40 +183,45 @@ verify_installation() {
     
     # Check Node.js
     if command_exists node; then
-        local node_version=$(node --version)
-        log_success "Node.js: $node_version"
+        local node_version
+        node_version=$(node --version)
+        log_success "Node.js: ${node_version}"
     else
         log_error "Node.js not found"
     fi
     
     # Check npm
     if command_exists npm; then
-        local npm_version=$(npm --version)
-        log_success "npm: v$npm_version"
+        local npm_version
+        npm_version=$(npm --version)
+        log_success "npm: v${npm_version}"
     else
         log_error "npm not found"
     fi
     
     # Check AWS CLI
     if command_exists aws; then
-        local aws_version=$(aws --version | cut -d' ' -f1)
-        log_success "AWS CLI: $aws_version"
+        local aws_version
+        aws_version=$(aws --version | cut -d' ' -f1)
+        log_success "AWS CLI: ${aws_version}"
     else
         log_error "AWS CLI not found"
     fi
     
     # Check CDK
     if command_exists cdk; then
-        local cdk_version=$(cdk --version)
-        log_success "AWS CDK: $cdk_version"
+        local cdk_version
+        cdk_version=$(cdk --version)
+        log_success "AWS CDK: ${cdk_version}"
     else
         log_error "AWS CDK not found"
     fi
     
     # Check TypeScript
     if command_exists tsc; then
-        local ts_version=$(tsc --version)
-        log_success "TypeScript: $ts_version"
+        local ts_version
+        ts_version=$(tsc --version)
+        log_success "TypeScript: ${ts_version}"
     else
         log_error "TypeScript not found"
     fi
@@ -220,8 +229,9 @@ verify_installation() {
     # Check Docker
     if command_exists docker; then
         if docker info >/dev/null 2>&1; then
-            local docker_version=$(docker --version)
-            log_success "Docker: $docker_version (running)"
+            local docker_version
+            docker_version=$(docker --version)
+            log_success "Docker: ${docker_version} (running)"
         else
             log_warning "Docker installed but not running"
         fi
@@ -231,7 +241,8 @@ verify_installation() {
     
     # Check optional tools
     if command_exists jq; then
-        local jq_version=$(jq --version)
+        local jq_version
+        jq_version=$(jq --version)
         log_success "jq: $jq_version"
     else
         log_warning "jq not found (optional)"

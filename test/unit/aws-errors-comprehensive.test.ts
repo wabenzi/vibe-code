@@ -12,9 +12,9 @@ import { Effect } from 'effect'
 import { DynamoUserRepository } from '../../src/infrastructure/dynamo-user-repository'
 import { DynamoUserService } from '../../src/services/dynamo-user-service'
 import { CreateUserRequest } from '../../src/domain/user'
-import { handler as createUserHandler } from '../../src/lambda/create-user'
-import { handler as getUserHandler } from '../../src/lambda/get-user'
-import { handler as deleteUserHandler } from '../../src/lambda/delete-user'
+import { createUserHandler } from '../../src/lambda/create-user'
+import { getUserHandler } from '../../src/lambda/get-user'
+import { deleteUserHandler } from '../../src/lambda/delete-user'
 
 // Create AWS SDK mocks
 const dynamoDBMock = mockClient(DynamoDBClient)
@@ -23,7 +23,9 @@ const docClientMock = mockClient(DynamoDBDocumentClient)
 // Helper function to create test API Gateway events
 const createAPIGatewayEvent = (overrides: Partial<APIGatewayProxyEvent> = {}): APIGatewayProxyEvent => ({
   body: null,
-  headers: {},
+  headers: {
+    'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+  },
   multiValueHeaders: {},
   httpMethod: 'GET',
   isBase64Encoded: false,
@@ -332,7 +334,7 @@ describe('Comprehensive AWS DynamoDB Error Testing', () => {
         docClientMock.on(PutCommand).rejects(resourceError)
 
         // Act
-        const result = await createUserHandler(event) as APIGatewayProxyResult
+        const result = await Effect.runPromise(createUserHandler(event)) as APIGatewayProxyResult
 
         // Assert
         expect(result.statusCode).toBe(500)
@@ -363,7 +365,7 @@ describe('Comprehensive AWS DynamoDB Error Testing', () => {
         docClientMock.on(GetCommand).rejects(throughputError)
 
         // Act
-        const result = await getUserHandler(event) as APIGatewayProxyResult
+        const result = await Effect.runPromise(getUserHandler(event)) as APIGatewayProxyResult
 
         // Assert
         expect(result.statusCode).toBe(500)
@@ -393,7 +395,7 @@ describe('Comprehensive AWS DynamoDB Error Testing', () => {
         docClientMock.on(GetCommand).rejects(accessError)
 
         // Act
-        const result = await deleteUserHandler(event) as APIGatewayProxyResult
+        const result = await Effect.runPromise(deleteUserHandler(event)) as APIGatewayProxyResult
 
         // Assert
         expect(result.statusCode).toBe(500)

@@ -1,0 +1,11 @@
+{
+  "LocalUserApiStack": {
+    "UserApiEndpoint22DD5314": "https://bp72trc9ji.execute-api.localhost.localstack.cloud:4566/prod/",
+    "ApiUrl": "https://bp72trc9ji.execute-api.localhost.localstack.cloud:4566/prod/",
+    "CreateUserFunctionName": "LocalUserApiStack-CreateUserFunctionB24ECA-c3ae0eb1",
+    "GetUserFunctionName": "LocalUserApiStack-GetUserFunctionD3D353B4-20d91402",
+    "DeleteUserFunctionName": "LocalUserApiStack-DeleteUserFunctionF8A542-d2b466d8",
+    "DynamoDbTableName": "users-table",
+    "ApiKeyOutput": "tr5ycwc5m3"
+  }
+}

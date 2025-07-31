@@ -3,18 +3,18 @@ name: OpenAPI Validation
 on:
   push:
     paths:
-      - 'docs/openapi.yaml'
-      - '.github/workflows/openapi.yml'
+      - docs/openapi.yaml
+      - .github/workflows/openapi.yml
   pull_request:
     paths:
-      - 'docs/openapi.yaml'
-      - '.github/workflows/openapi.yml'
+      - docs/openapi.yaml
+      - .github/workflows/openapi.yml
 
 jobs:
   validate-openapi:
     runs-on: ubuntu-latest
     name: Validate OpenAPI Specification
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -22,8 +22,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -44,7 +44,7 @@ jobs:
   swagger-ui-check:
     runs-on: ubuntu-latest
     name: Swagger UI Compatibility Check
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install swagger-ui-serve
         run: npm install -g swagger-ui-serve
@@ -62,14 +62,14 @@ jobs:
           # Start swagger-ui-serve in background
           swagger-ui-serve docs/openapi.yaml &
           SERVER_PID=$!
-          
+
           # Wait for server to start
           sleep 5
-          
+
           # Check if server is responding
           curl -f http://localhost:8080 || exit 1
-          
+
           # Kill the server
           kill $SERVER_PID
-          
+
           echo "Swagger UI serving test passed"

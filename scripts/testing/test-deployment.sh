@@ -200,20 +200,20 @@ verify_dynamo_persistence() {
 
 	local item
 	item=$(aws --no-cli-pager dynamodb get-item \
-		--table-name "$TABLE_NAME" \
-		--key "{\"id\":{\"S\":\"$TEST_USER_ID\"}}" \
+		--table-name "${TABLE_NAME}" \
+		--key "{\"id\":{\"S\":\"${TEST_USER_ID}\"}}" \
 		--output json)
 
 	# Enhanced DynamoDB verification with detailed output
 	if command -v jq >/dev/null 2>&1; then
 		local stored_id stored_name stored_created_at stored_updated_at
-		stored_id=$(echo "$item" | jq -r '.Item.id.S // empty')
-		stored_name=$(echo "$item" | jq -r '.Item.name.S // empty')
-		stored_created_at=$(echo "$item" | jq -r '.Item.createdAt.S // empty')
-		stored_updated_at=$(echo "$item" | jq -r '.Item.updatedAt.S // empty')
+		stored_id=$(echo "${item}" | jq -r '.Item.id.S // empty')
+		stored_name=$(echo "${item}" | jq -r '.Item.name.S // empty')
+		stored_created_at=$(echo "${item}" | jq -r '.Item.createdAt.S // empty')
+		stored_updated_at=$(echo "${item}" | jq -r '.Item.updatedAt.S // empty')
 
 		log_info "DynamoDB stored data:"
-		echo "$item" | jq '.Item'
+		echo "${item}" | jq '.Item'
 
 		if [[ "${stored_id}" == "${TEST_USER_ID}" ]] && [[ "${stored_name}" == "${TEST_USER_NAME}" ]]; then
 			log_success "DynamoDB persistence verification passed"
@@ -240,11 +240,11 @@ verify_dynamo_persistence() {
 		fi
 	else
 		# Basic check without jq
-		if echo "$item" | grep -q "$TEST_USER_ID" && echo "$item" | grep -q "$TEST_USER_NAME"; then
+		if echo "${item}" | grep -q "${TEST_USER_ID}" && echo "${item}" | grep -q "${TEST_USER_NAME}"; then
 			log_success "DynamoDB persistence verification passed (basic check)"
 		else
 			log_error "DynamoDB persistence verification failed"
-			log_error "Item: $item"
+			log_error "Item: ${item}"
 			return 1
 		fi
 	fi

@@ -4,10 +4,11 @@ import { createUserService } from '../services/dynamo-user-service'
 import { ApiResponse } from './types/api-response'
 import { extractUserId } from './utils/validation'
 import { handleError } from './utils/error-handler'
+import { withSecurity } from './utils/security-middleware'
 
 // Effect-based user deletion pipeline
-const deleteUserProgram = (event: APIGatewayProxyEvent) => {
-  console.log('Delete User Lambda invoked', { event })
+const deleteUserProgram = (event: APIGatewayProxyEvent, authenticatedUser?: string) => {
+  console.log('Delete User Lambda invoked', { event, authenticatedUser })
   
   return extractUserId(event).pipe(
     Effect.flatMap(userId => {
@@ -17,12 +18,16 @@ const deleteUserProgram = (event: APIGatewayProxyEvent) => {
   )
 }
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  return await Effect.runPromise(
-    deleteUserProgram(event).pipe(
-      Effect.map(() => ApiResponse.noContent()),
-      Effect.catchAll((error) => Effect.succeed(handleError(error))),
-      Effect.scoped
-    )
+const handlerLogic = (event: APIGatewayProxyEvent, authenticatedUser?: string) => {
+  return deleteUserProgram(event, authenticatedUser).pipe(
+    Effect.map(() => ApiResponse.noContent()),
+    Effect.catchAll((error) => Effect.succeed(handleError(error))),
+    Effect.scoped
   )
 }
+
+// Export the handler logic for unit testing (without security middleware)
+export const deleteUserHandler = handlerLogic
+
+// Export the secured handler for production use
+export const handler = withSecurity(handlerLogic)

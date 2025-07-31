@@ -5,15 +5,13 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-AWS_CLI_OPTS="--no-cli-pager --no-paginate"
-AWS_CLI_OPTS_SILENT="--no-cli-pager --no-paginate --output text"
+PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
 STACK_NAME="UserApiStack"
 DEFAULT_REGION="us-west-2"
 
 # Source common logging functions
 LOG_PREFIX="AWS"
-source "$(dirname "$(dirname "$0")")/common-logging.sh"
+source "$(dirname "$(${BASH_SOURCE[0]})")/common-logging.sh"
 
 get_account_id() {
     aws sts get-caller-identity --query Account --output text
@@ -36,8 +34,10 @@ set_aws_env() {
         log_error "Please run 'aws configure' to set up your AWS credentials"
         exit 1
     fi
-    local account_id=$(get_account_id)
-    local region=$(get_region)
+    local account_id
+    account_id=$(get_account_id)
+    local region
+    region=$(get_region)
     log_success "AWS environment configured (Account: $account_id, Region: ${region:-$DEFAULT_REGION})"
 }
 
@@ -69,16 +69,18 @@ check_prerequisites() {
 # Bootstrap CDK (if needed)
 bootstrap_cdk() {
     log_info "Checking CDK bootstrap status..."
-    cd "$PROJECT_DIR"
+    cd "${PROJECT_DIR}"
 
-    local account_id=$(get_account_id)
-    local region=$(get_region)
+    local account_id
+    account_id=$(get_account_id)
+    local region
+    region=$(get_region)
 
     # Check if already bootstrapped
-    if aws cloudformation describe-stacks --stack-name CDKToolkit --region $region --no-cli-pager >/dev/null 2>&1; then
-        log_success "CDK already bootstrapped for account $account_id in region $region"
+    if aws cloudformation describe-stacks --stack-name CDKToolkit --region "${region}" --no-cli-pager >/dev/null 2>&1; then
+        log_success "CDK already bootstrapped for account ${account_id} in region ${region}"
     else
-        log_info "Bootstrapping CDK for account $account_id in region $region..."
+        log_info "Bootstrapping CDK for account ${account_id} in region $region..."
         npm run bootstrap
         log_success "CDK bootstrap completed"
     fi
@@ -87,7 +89,7 @@ bootstrap_cdk() {
 # Build the project
 build_project() {
     log_info "Building project..."
-    cd "$PROJECT_DIR"
+    cd "${PROJECT_DIR}"
     npm run build
     log_success "Project built successfully"
 }
@@ -95,11 +97,11 @@ build_project() {
 # Deploy infrastructure
 deploy_infrastructure() {
     log_info "Deploying infrastructure to AWS..."
-    cd "$PROJECT_DIR"
+    cd "${PROJECT_DIR}"
     
     # Optional: Set DSQL cluster ARN if available
-    if [ -n "$DSQL_CLUSTER_ARN" ]; then
-        log_info "Using DSQL cluster: $DSQL_CLUSTER_ARN"
+    if [[ -n "${DSQL_CLUSTER_ARN}" ]]; then
+        log_info "Using DSQL cluster: ${DSQL_CLUSTER_ARN}"
     else
         log_warning "No DSQL cluster ARN provided. Application will use mock data fallback."
         log_info "To use DSQL, set: export DSQL_CLUSTER_ARN=arn:aws:dsql:region:account:cluster/cluster-id"
@@ -112,7 +114,7 @@ deploy_infrastructure() {
 # Destroy infrastructure
 destroy_infrastructure() {
     log_info "Destroying AWS infrastructure..."
-    cd "$PROJECT_DIR"
+    cd "${PROJECT_DIR}"
     npm run destroy
     log_success "Infrastructure destroyed successfully"
 }
@@ -142,16 +144,16 @@ show_deployment_info() {
 # Show stack info
 show_stack_info() {
     log_info "Fetching stack information..."
-    cd "$PROJECT_DIR"
+    cd "${PROJECT_DIR}"
 
-    if aws cloudformation describe-stacks --stack-name $STACK_NAME --no-cli-pager >/dev/null 2>&1; then
+    if aws cloudformation describe-stacks --stack-name "${STACK_NAME}" --no-cli-pager >/dev/null 2>&1; then
         echo ""
         echo "📊 Stack Status:"
-        aws cloudformation describe-stacks --stack-name $STACK_NAME --query 'Stacks[0].StackStatus' --output text --no-cli-pager
-        
+        aws cloudformation describe-stacks --stack-name "${STACK_NAME}" --query 'Stacks[0].StackStatus' --output text --no-cli-pager
+
         echo ""
         echo "🔗 Stack Outputs:"
-        aws cloudformation describe-stacks --stack-name $STACK_NAME --query 'Stacks[0].Outputs' --output table --no-cli-pager
+        aws cloudformation describe-stacks --stack-name "${STACK_NAME}" --query 'Stacks[0].Outputs' --output table --no-cli-pager
         
         echo ""
         echo "💸 Estimated Monthly Cost:"
@@ -199,7 +201,7 @@ case "${1:-deploy}" in
         check_prerequisites
         set_aws_env
         build_project
-        cd "$PROJECT_DIR"
+        cd "${PROJECT_DIR}"
         npm run diff
         ;;
     *)

@@ -4,17 +4,17 @@ on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'src/**'
-      - 'test/**'
-      - 'docs/openapi.yaml'
-      - '.github/workflows/**'
+      - src/**
+      - test/**
+      - docs/openapi.yaml
+      - .github/workflows/**
   pull_request:
     branches: [ main, develop ]
     paths:
-      - 'src/**'
-      - 'test/**'
-      - 'docs/openapi.yaml'
-      - '.github/workflows/**'
+      - src/**
+      - test/**
+      - docs/openapi.yaml
+      - .github/workflows/**
 
 jobs:
   validate-openapi:
@@ -29,7 +29,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: npm
 
       - name: Install yq for YAML validation
         run: |
@@ -103,7 +103,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -132,7 +132,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -193,7 +193,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -241,7 +241,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: npm
 
       - name: Install dependencies
         run: npm ci

@@ -1,4 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import { Effect } from 'effect'
 import { ApiResponse } from './types/api-response'
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -11,5 +12,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     service: 'user-management-api'
   }
 
+  // Return response with security headers
   return ApiResponse.ok(healthData)
 }

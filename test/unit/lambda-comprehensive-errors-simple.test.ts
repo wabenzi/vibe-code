@@ -1,10 +1,11 @@
 import { mockClient } from 'aws-sdk-client-mock'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, PutCommand, GetCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb'
-import { handler as CreateUserHandler } from '../../src/lambda/create-user'
-import { handler as GetUserHandler } from '../../src/lambda/get-user'
-import { handler as DeleteUserHandler } from '../../src/lambda/delete-user'
+import { createUserHandler as CreateUserHandler } from '../../src/lambda/create-user'
+import { getUserHandler as GetUserHandler } from '../../src/lambda/get-user'
+import { deleteUserHandler as DeleteUserHandler } from '../../src/lambda/delete-user'
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
+import { Effect } from 'effect'
 
 // Create mock instances
 const dynamoDBMock = mockClient(DynamoDBClient)
@@ -34,7 +35,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'POST',
         path: '/users',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -49,7 +52,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         })
       }
 
-      const result = await CreateUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(CreateUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -74,7 +77,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'GET',
         path: '/users/123',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -86,7 +91,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const result = await GetUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(GetUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -111,7 +116,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'POST',
         path: '/users',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -126,7 +133,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         })
       }
 
-      const result = await CreateUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(CreateUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -151,7 +158,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'POST',
         path: '/users',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -166,7 +175,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         })
       }
 
-      const result = await CreateUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(CreateUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -191,7 +200,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'POST',
         path: '/users',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -206,7 +217,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         })
       }
 
-      const result = await CreateUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(CreateUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -231,7 +242,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'DELETE',
         path: '/users/789',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -243,7 +256,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const result = await DeleteUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(DeleteUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -268,7 +281,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'GET',
         path: '/users/network-fail',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -280,7 +295,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const result = await GetUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(GetUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -305,7 +320,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'GET',
         path: '/users/timeout-fail',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -317,7 +334,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const result = await GetUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(GetUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -337,7 +354,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'POST',
         path: '/users',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -349,7 +368,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null // Missing body
       }
 
-      const result = await CreateUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(CreateUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(400)
       expect(JSON.parse(result.body)).toEqual({
@@ -364,7 +383,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'POST',
         path: '/users',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -376,7 +397,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: '{ invalid json' // Invalid JSON
       }
 
-      const result = await CreateUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(CreateUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(400)
       expect(JSON.parse(result.body)).toEqual({
@@ -391,7 +412,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'POST',
         path: '/users',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -406,7 +429,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         })
       }
 
-      const result = await CreateUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(CreateUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(400)
       expect(JSON.parse(result.body)).toEqual({
@@ -423,7 +446,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'GET',
         path: '/users/',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -435,7 +460,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const result = await GetUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(GetUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(400)
       expect(JSON.parse(result.body)).toEqual({
@@ -454,7 +479,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const event: APIGatewayProxyEvent = {
         httpMethod: 'POST',
         path: '/users',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -469,7 +496,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         })
       }
 
-      const result = await CreateUserHandler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(CreateUserHandler(event)) as APIGatewayProxyResult
 
       expect(result.statusCode).toBe(500)
       expect(JSON.parse(result.body)).toEqual({
@@ -499,7 +526,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const createEvent: APIGatewayProxyEvent = {
         httpMethod: 'POST',
         path: '/users',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -514,7 +543,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         })
       }
 
-      const createResult = await CreateUserHandler(createEvent) as APIGatewayProxyResult
+      const createResult = await Effect.runPromise(CreateUserHandler(createEvent)) as APIGatewayProxyResult
 
       expect(createResult.statusCode).toBe(500)
       expect(JSON.parse(createResult.body)).toEqual({
@@ -540,7 +569,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const getEvent: APIGatewayProxyEvent = {
         httpMethod: 'GET',
         path: '/users/cascade-test-2',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -552,7 +583,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null
       }
 
-      const getResult = await GetUserHandler(getEvent) as APIGatewayProxyResult
+      const getResult = await Effect.runPromise(GetUserHandler(getEvent)) as APIGatewayProxyResult
 
       expect(getResult.statusCode).toBe(500)
       expect(JSON.parse(getResult.body)).toEqual({
@@ -570,7 +601,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const invalidEvent: APIGatewayProxyEvent = {
         httpMethod: 'POST',
         path: '/users',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -582,7 +615,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         body: null // Invalid: missing body
       }
 
-      const invalidResult = await CreateUserHandler(invalidEvent) as APIGatewayProxyResult
+      const invalidResult = await Effect.runPromise(CreateUserHandler(invalidEvent)) as APIGatewayProxyResult
 
       expect(invalidResult.statusCode).toBe(400)
       expect(JSON.parse(invalidResult.body)).toEqual({
@@ -602,7 +635,9 @@ describe('Comprehensive Lambda Error Testing', () => {
       const validEvent: APIGatewayProxyEvent = {
         httpMethod: 'POST',
         path: '/users',
-        headers: {},
+        headers: {
+          'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+        },
         multiValueHeaders: {},
         queryStringParameters: null,
         multiValueQueryStringParameters: null,
@@ -617,7 +652,7 @@ describe('Comprehensive Lambda Error Testing', () => {
         })
       }
 
-      const dbResult = await CreateUserHandler(validEvent) as APIGatewayProxyResult
+      const dbResult = await Effect.runPromise(CreateUserHandler(validEvent)) as APIGatewayProxyResult
 
       expect(dbResult.statusCode).toBe(500)
       expect(JSON.parse(dbResult.body)).toEqual({

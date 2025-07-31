@@ -48,6 +48,29 @@ API Gateway → Lambda Functions → DynamoDB
 - **bc** - Mathematical calculations in SLOC analysis
 - **curl** - HTTP testing (usually pre-installed)
 
+### Environment Configuration
+
+1. **Copy environment template:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configure API key:**
+   ```bash
+   # Generate a secure API key
+   openssl rand -base64 32
+   
+   # Add to .env file
+   echo "API_KEY=your-generated-key-here" >> .env
+   ```
+
+3. **Update allowed origins** (for production):
+   ```bash
+   echo "PROD_ALLOWED_ORIGINS=https://yourdomain.com" >> .env
+   ```
+
+📚 **See [Environment Configuration Guide](docs/ENVIRONMENT.md) for detailed setup instructions.**
+
 ### 🍎 Automated macOS Setup
 
 For macOS users, we provide a complete automated setup script:

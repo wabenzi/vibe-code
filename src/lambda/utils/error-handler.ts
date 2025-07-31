@@ -2,10 +2,35 @@ import { APIGatewayProxyResult } from 'aws-lambda'
 import { Effect } from 'effect'
 import { ValidationError, UserNotFoundError, DatabaseError } from '../../domain/user'
 import { DynamoUserRepositoryError } from '../../infrastructure/dynamo-user-repository'
+import { AuthenticationError, AuthorizationError, logSecurityEvent } from './auth'
 import { ApiResponse } from '../types/api-response'
 
-// Shared error handler that maps Effect errors to API responses
-export const handleError = (error: unknown): APIGatewayProxyResult => {
+// Shared error handler that maps Effect errors to API responses with security logging
+export const handleError = (error: unknown, sourceIp?: string): APIGatewayProxyResult => {
+  // Handle Authentication Errors (401)
+  if (error instanceof AuthenticationError) {
+    logSecurityEvent({
+      type: 'AUTH_FAILURE',
+      sourceIp,
+      endpoint: 'unknown',
+      timestamp: new Date().toISOString()
+    })
+    
+    return ApiResponse.unauthorized(error.message)
+  }
+
+  // Handle Authorization Errors (403)
+  if (error instanceof AuthorizationError) {
+    logSecurityEvent({
+      type: 'AUTHZ_FAILURE',
+      sourceIp,
+      endpoint: 'unknown',
+      timestamp: new Date().toISOString()
+    })
+    
+    return ApiResponse.forbidden(error.message)
+  }
+
   // Handle ValidationError
   if (error instanceof ValidationError) {
     // Log validation error details for debugging using Effect

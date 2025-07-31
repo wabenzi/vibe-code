@@ -23,9 +23,33 @@ export class AuthorizationError extends Error {
 }
 
 /**
- * Extract and validate API key from request headers
+ * Extract user context from Lambda Authorizer
+ * With Lambda Authorizer, authentication is handled by the authorizer function
+ * and user context is passed through the requestContext.authorizer
  */
 export const authenticateRequest = (event: APIGatewayProxyEvent) => {
+  // With Lambda Authorizer, the authorizer context contains user information
+  const authorizerContext = event.requestContext.authorizer
+  
+  if (!authorizerContext) {
+    return Effect.fail(new AuthenticationError('No authorization context found'))
+  }
+
+  // Extract user ID from authorizer context
+  const userId = authorizerContext.userId || authorizerContext.principalId
+  
+  if (!userId) {
+    return Effect.fail(new AuthenticationError('No user ID found in authorization context'))
+  }
+
+  return Effect.succeed(userId)
+}
+
+/**
+ * Legacy API key authentication for backward compatibility
+ * This can be used for health checks or other endpoints that don't require JWT
+ */
+export const authenticateWithApiKey = (event: APIGatewayProxyEvent) => {
   // Check for API key in headers (case-insensitive)
   const apiKey = event.headers['x-api-key'] || 
                  event.headers['X-API-Key'] || 
@@ -51,32 +75,63 @@ export const authenticateRequest = (event: APIGatewayProxyEvent) => {
  * This is a placeholder for more sophisticated authorization logic
  */
 export const authorizeUserAccess = (
-  authenticatedUser: string, 
+  authenticatedUserId: string,
   requestedUserId: string
 ) => {
   // For now, allow access if authenticated
   // In production, implement proper user-level authorization
-  if (!authenticatedUser) {
+  if (!authenticatedUserId) {
     return Effect.fail(new AuthorizationError('User not authenticated'))
   }
 
   // Example: Users can only access their own data
-  // You would implement proper user identification here
+  // You can implement more sophisticated rules here
+  if (authenticatedUserId !== requestedUserId) {
+    // For now, allow access to any user data if authenticated
+    // In production, you might want to restrict this
+    console.log(`User ${authenticatedUserId} accessing data for user ${requestedUserId}`)
+  }
+
   return Effect.succeed(true)
 }
 
 /**
  * Extract user ID from authenticated context
- * This is a placeholder - in production you'd decode from JWT or lookup from API key
+ * With Lambda Authorizer, user ID is available in the authorizer context
  */
-export const extractUserFromAuth = (apiKey: string): Effect.Effect<string, AuthorizationError> => {
-  // Placeholder: In production, lookup user from API key or decode JWT
-  // For now, return a default user ID
-  if (apiKey) {
-    return Effect.succeed('authenticated-user')
+export const extractUserFromAuth = (event: APIGatewayProxyEvent): Effect.Effect<string, AuthorizationError> => {
+  const authorizerContext = event.requestContext.authorizer
+  
+  if (!authorizerContext) {
+    return Effect.fail(new AuthorizationError('No authorization context found'))
+  }
+
+  const userId = authorizerContext.userId || authorizerContext.principalId
+  const email = authorizerContext.email
+  
+  if (!userId) {
+    return Effect.fail(new AuthorizationError('Cannot extract user from authentication context'))
   }
   
-  return Effect.fail(new AuthorizationError('Cannot extract user from authentication'))
+  return Effect.succeed(userId)
+}
+
+/**
+ * Get additional user context from authorizer
+ */
+export const getUserContext = (event: APIGatewayProxyEvent) => {
+  const authorizerContext = event.requestContext.authorizer
+  
+  if (!authorizerContext) {
+    return null
+  }
+
+  return {
+    userId: authorizerContext.userId || authorizerContext.principalId,
+    email: authorizerContext.email || '',
+    scope: authorizerContext.scope ? authorizerContext.scope.split(',') : [],
+    tokenIssuer: authorizerContext.tokenIssuer || '',
+  }
 }
 
 /**

@@ -28,6 +28,7 @@ export class ApiClient {
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
+        'X-Api-Key': process.env.API_KEY || 'tr5ycwc5m3', // Default for LocalStack testing
       },
       // Disable SSL verification for LocalStack
       httpsAgent: process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0' ? undefined : 
@@ -114,16 +115,22 @@ export function createTestUser(overrides: Partial<CreateUserRequest> = {}): Crea
 }
 
 export function getApiUrl(): string {
-  // Check for environment variable first (for CI/automated testing)
+  // Check for deployment environment variable first (set by deploy-and-export.sh)
   if (process.env.API_URL) {
     return process.env.API_URL
   }
   
-  // For AWS deployment (assumes 'prod' stage)
+  // Check for integration test specific variable
+  if (process.env.INTEGRATION_TEST_API_URL) {
+    return process.env.INTEGRATION_TEST_API_URL
+  }
+  
+  // Legacy fallback for AWS deployment (assumes 'prod' stage)
   if (process.env.NODE_ENV === 'production') {
     return 'https://j20a33ppkl.execute-api.us-west-2.amazonaws.com/prod'
   }
   
-  // For LocalStack - use the currently deployed API Gateway URL
-  return 'https://sx65uzlpv3.execute-api.localhost.localstack.cloud:4566/prod/'
+  // Final fallback for LocalStack (this should rarely be used now)
+  console.warn('⚠️  No API_URL environment variable found, using fallback LocalStack URL')
+  return 'https://bp72trc9ji.execute-api.localhost.localstack.cloud:4566/prod/'
 }

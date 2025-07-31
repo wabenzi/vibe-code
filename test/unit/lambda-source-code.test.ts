@@ -1,8 +1,9 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import { handler as createUserHandler } from '../../src/lambda/create-user'
-import { handler as getUserHandler } from '../../src/lambda/get-user'
-import { handler as deleteUserHandler } from '../../src/lambda/delete-user'
+import { createUserHandler } from '../../src/lambda/create-user'
+import { getUserHandler } from '../../src/lambda/get-user'
+import { deleteUserHandler } from '../../src/lambda/delete-user'
 import { handler as healthHandler } from '../../src/lambda/health'
+import { Effect } from 'effect'
 
 // Mock the DynamoDB service to avoid external dependencies
 jest.mock('@aws-sdk/client-dynamodb')
@@ -10,7 +11,9 @@ jest.mock('@aws-sdk/lib-dynamodb')
 
 const createMockAPIGatewayEvent = (overrides: Partial<APIGatewayProxyEvent> = {}): APIGatewayProxyEvent => ({
   body: null,
-  headers: {},
+  headers: {
+    'X-Api-Key': 'tr5ycwc5m3' // Required API key for authentication
+  },
   multiValueHeaders: {},
   httpMethod: 'GET',
   isBase64Encoded: false,
@@ -64,9 +67,16 @@ describe('Lambda Handlers - Source Code Tests', () => {
       expect(result.statusCode).toBe(200)
       expect(result.headers).toEqual({
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': 'http://localhost:3000',
         'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+        'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
+        'Access-Control-Allow-Credentials': 'true',
+        'Content-Security-Policy': 'default-src \'self\'',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block'
       })
       
       const body = JSON.parse(result.body)
@@ -88,7 +98,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
         body: null,
       })
 
-      const result: APIGatewayProxyResult = await createUserHandler(event)
+      const result: APIGatewayProxyResult = await Effect.runPromise(createUserHandler(event))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
@@ -102,7 +112,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
         body: '{ invalid json }',
       })
 
-      const result: APIGatewayProxyResult = await createUserHandler(event)
+      const result: APIGatewayProxyResult = await Effect.runPromise(createUserHandler(event))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
@@ -116,7 +126,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
         body: JSON.stringify({}),
       })
 
-      const result: APIGatewayProxyResult = await createUserHandler(event)
+      const result: APIGatewayProxyResult = await Effect.runPromise(createUserHandler(event))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
@@ -130,7 +140,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
         body: JSON.stringify({ id: 123, name: 456 }),
       })
 
-      const result: APIGatewayProxyResult = await createUserHandler(event)
+      const result: APIGatewayProxyResult = await Effect.runPromise(createUserHandler(event))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
@@ -150,7 +160,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
         pathParameters: null,
       })
 
-      const result: APIGatewayProxyResult = await getUserHandler(event)
+      const result: APIGatewayProxyResult = await Effect.runPromise(getUserHandler(event))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
@@ -164,7 +174,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
         pathParameters: { id: 'user/with/slashes' },
       })
 
-      const result: APIGatewayProxyResult = await getUserHandler(event)
+      const result: APIGatewayProxyResult = await Effect.runPromise(getUserHandler(event))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
@@ -184,7 +194,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
         pathParameters: null,
       })
 
-      const result: APIGatewayProxyResult = await deleteUserHandler(event)
+      const result: APIGatewayProxyResult = await Effect.runPromise(deleteUserHandler(event))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)
@@ -198,7 +208,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
         pathParameters: { id: 'user/with/slashes' },
       })
 
-      const result: APIGatewayProxyResult = await deleteUserHandler(event)
+      const result: APIGatewayProxyResult = await Effect.runPromise(deleteUserHandler(event))
 
       expect(result.statusCode).toBe(400)
       const body = JSON.parse(result.body)

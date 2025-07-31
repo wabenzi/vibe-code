@@ -78,19 +78,19 @@ check_shellcheck() {
 
 # Get all bash scripts in the scripts directory
 get_scripts() {
-    find "$SCRIPTS_DIR" -name "*.sh" -type f | sort
+    find "${SCRIPTS_DIR}" -name "*.sh" -type f | sort
 }
 
 # Check if script has execute permissions
 check_permissions() {
     local script="$1"
-    if [[ ! -x "$script" ]]; then
-        if [[ "$FIX_PERMISSIONS" == "true" ]]; then
-            chmod +x "$script"
-            PERMISSION_FIXED+=("$(basename "$script")")
-            log_info "Fixed permissions for $(basename "$script")"
+    if [[ ! -x "${script}" ]]; then
+        if [[ "${FIX_PERMISSIONS}" == "true" ]]; then
+            chmod +x "${script}"
+            PERMISSION_FIXED+=("$(basename "${script}")")
+            log_info "Fixed permissions for $(basename "${script}")"
         else
-            log_warning "$(basename "$script") is not executable (use --fix-permissions to fix)"
+            log_warning "$(basename "${script}") is not executable (use --fix-permissions to fix)"
         fi
     fi
 }
@@ -99,26 +99,26 @@ check_permissions() {
 test_syntax() {
     local script="$1"
     local script_name
-    script_name="$(basename "$script")"
+    script_name="$(basename "${script}")"
     
-    if [[ "$VERBOSE" == "true" ]]; then
-        log_info "Testing syntax: $script_name"
+    if [[ "${VERBOSE}" == "true" ]]; then
+        log_info "Testing syntax: ${script_name}"
     fi
     
-    if bash -n "$script" 2>/dev/null; then
-        PASSED_SCRIPTS+=("$script_name")
-        if [[ "$VERBOSE" == "true" ]]; then
-            log_success "✅ $script_name syntax OK"
+    if bash -n "${script}" 2>/dev/null; then
+        PASSED_SCRIPTS+=("${script_name}")
+        if [[ "${VERBOSE}" == "true" ]]; then
+            log_success "✅ ${script_name} syntax OK"
         fi
         return 0
     else
-        FAILED_SCRIPTS+=("$script_name")
-        log_error "❌ $script_name syntax FAILED"
+        FAILED_SCRIPTS+=("${script_name}")
+        log_error "❌ ${script_name} syntax FAILED"
         # Show the actual error
         log_error "Syntax error details:"
         while IFS= read -r line; do
-            echo "    $line"
-        done < <(bash -n "$script" 2>&1)
+            echo "    ${line}"
+        done < <(bash -n "${script}" 2>&1)
         return 1
     fi
 }
@@ -127,27 +127,27 @@ test_syntax() {
 test_shellcheck() {
     local script="$1"
     local script_name
-    script_name="$(basename "$script")"
+    script_name="$(basename "${script}")"
     
-    if [[ "$VERBOSE" == "true" ]]; then
-        log_info "Running shellcheck: $script_name"
+    if [[ "${VERBOSE}" == "true" ]]; then
+        log_info "Running shellcheck: ${script_name}"
     fi
     
     local shellcheck_output
-    shellcheck_output=$(shellcheck "$script" 2>&1) || true
+    shellcheck_output=$(shellcheck "${script}" 2>&1) || true
     
-    if [[ -z "$shellcheck_output" ]]; then
-        if [[ "$VERBOSE" == "true" ]]; then
-            log_success "✅ $script_name shellcheck clean"
+    if [[ -z "${shellcheck_output}" ]]; then
+        if [[ "${VERBOSE}" == "true" ]]; then
+            log_success "✅ ${script_name} shellcheck clean"
         fi
         return 0
     else
-        SHELLCHECK_WARNINGS+=("$script_name")
-        log_warning "⚠️  $script_name has shellcheck issues:"
+        SHELLCHECK_WARNINGS+=("${script_name}")
+        log_warning "⚠️  ${script_name} has shellcheck issues:"
         # Indent each line of shellcheck output
         while IFS= read -r line; do
-            echo "    $line"
-        done <<< "$shellcheck_output"
+            echo "    ${line}"
+        done <<< "${shellcheck_output}"
         echo ""
         return 1
     fi
@@ -160,11 +160,11 @@ main() {
     local scripts=()
     local script
     while IFS= read -r script; do
-        scripts+=("$script")
+        scripts+=("${script}")
     done < <(get_scripts)
     
     if [[ ${#scripts[@]} -eq 0 ]]; then
-        log_error "No bash scripts found in $SCRIPTS_DIR"
+        log_error "No bash scripts found in ${SCRIPTS_DIR}"
         exit 1
     fi
     
@@ -180,7 +180,7 @@ main() {
     log_section "Phase 1: Permission Check"
     
     for script in "${scripts[@]}"; do
-        check_permissions "$script"
+        check_permissions "${script}"
     done
     
     if [[ ${#PERMISSION_FIXED[@]} -gt 0 ]]; then
@@ -192,18 +192,18 @@ main() {
     
     local syntax_failed=0
     for script in "${scripts[@]}"; do
-        if ! test_syntax "$script"; then
+        if ! test_syntax "${script}"; then
             ((syntax_failed++))
         fi
     done
     
-    if [[ "$has_shellcheck" == "true" ]]; then
+    if [[ "${has_shellcheck}" == "true" ]]; then
         log_separator
         log_section "Phase 3: Shellcheck Analysis"
         
         local shellcheck_issues=0
         for script in "${scripts[@]}"; do
-            if ! test_shellcheck "$script"; then
+            if ! test_shellcheck "${script}"; then
                 ((shellcheck_issues++))
             fi
         done
@@ -220,7 +220,7 @@ main() {
         log_error "Syntax failed: ${#FAILED_SCRIPTS[@]} (${FAILED_SCRIPTS[*]})"
     fi
     
-    if [[ "$has_shellcheck" == "true" ]]; then
+    if [[ "${has_shellcheck}" == "true" ]]; then
         if [[ ${#SHELLCHECK_WARNINGS[@]} -gt 0 ]]; then
             log_warning "Shellcheck issues: ${#SHELLCHECK_WARNINGS[@]} (${SHELLCHECK_WARNINGS[*]})"
         else
@@ -236,7 +236,7 @@ main() {
     if [[ ${#FAILED_SCRIPTS[@]} -gt 0 ]]; then
         log_footer "❌ Validation FAILED - Fix syntax errors above"
         exit 1
-    elif [[ "$has_shellcheck" == "true" ]] && [[ ${#SHELLCHECK_WARNINGS[@]} -gt 0 ]]; then
+    elif [[ "${has_shellcheck}" == "true" ]] && [[ ${#SHELLCHECK_WARNINGS[@]} -gt 0 ]]; then
         log_footer "⚠️  Validation completed with warnings - Consider fixing shellcheck issues"
         exit 0
     else

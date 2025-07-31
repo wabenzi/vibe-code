@@ -33,19 +33,21 @@ export class UserApiStack extends cdk.Stack {
     this.lambdaRole = this.createLambdaRole();
 
     // Create Lambda functions
+    const authorizerFunction = this.createAuthorizerLambdaFunction();
     const createUserFunction = this.createUserLambdaFunction('CreateUserFunction', 'create-user.ts');
     const getUserFunction = this.createUserLambdaFunction('GetUserFunction', 'get-user.ts');
     const deleteUserFunction = this.createUserLambdaFunction('DeleteUserFunction', 'delete-user.ts');
     const healthFunction = this.createHealthLambdaFunction();
 
-    // Create API Gateway
+    // Create API Gateway with Lambda Authorizer
     const api = this.createApiGateway();
+    const authorizer = this.createLambdaAuthorizer(api, authorizerFunction);
     this.setupApiRoutes(api, {
       createUserFunction,
       getUserFunction,
       deleteUserFunction,
       healthFunction,
-    });
+    }, authorizer);
 
     // Create monitoring dashboard
     this.createMonitoringDashboard(api, {
@@ -93,15 +95,20 @@ export class UserApiStack extends cdk.Stack {
           statements: [
             new iam.PolicyStatement({
               effect: iam.Effect.ALLOW,
+              // Least privilege - only permissions actually used by the application
               actions: [
-                'dynamodb:GetItem',
-                'dynamodb:PutItem',
-                'dynamodb:UpdateItem',
-                'dynamodb:DeleteItem',
-                'dynamodb:Scan',
-                'dynamodb:Query',
+                'dynamodb:GetItem',    // Used by get-user.ts
+                'dynamodb:PutItem',    // Used by create-user.ts  
+                'dynamodb:DeleteItem', // Used by delete-user.ts
+                // Removed: UpdateItem, Scan, Query (not used by current application)
               ],
               resources: [this.usersTable.tableArn],
+              // Add condition for additional security
+              conditions: {
+                'ForAllValues:StringEquals': {
+                  'dynamodb:Attributes': ['id', 'name', 'createdAt', 'updatedAt']
+                }
+              }
             }),
           ],
         }),
@@ -109,10 +116,56 @@ export class UserApiStack extends cdk.Stack {
     });
   }
 
+  private createAuthorizerLambdaFunction(): NodejsFunction {
+    return new NodejsFunction(this, 'AuthorizerFunction', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'handler',
+      entry: 'src/lambda/authorizer.ts',
+      role: this.lambdaRole,
+      environment: {
+        ...this.createBaseEnvironment(),
+        JWT_SECRET: process.env.JWT_SECRET || 'development-secret-key',
+        JWT_AUDIENCE: process.env.JWT_AUDIENCE || 'user-management-api',
+        JWT_ISSUER: process.env.JWT_ISSUER || 'user-management-service',
+      },
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      logGroup: this.apiLogGroup,
+      bundling: {
+        ...this.createBaseBundlingOptions(),
+        nodeModules: [...this.createBaseBundlingOptions().nodeModules, 'jsonwebtoken'],
+      },
+    });
+  }
+
+  private createLambdaAuthorizer(api: apigateway.RestApi, authorizerFunction: NodejsFunction): apigateway.TokenAuthorizer {
+    return new apigateway.TokenAuthorizer(this, 'UserApiAuthorizer', {
+      authorizerName: 'UserApiTokenAuthorizer',
+      handler: authorizerFunction,
+      identitySource: 'method.request.header.Authorization',
+      validationRegex: '^Bearer [-0-9A-Za-z\\.]+$',
+      resultsCacheTtl: cdk.Duration.seconds(300), // Cache authorization results for 5 minutes
+    });
+  }
+
   private createBaseEnvironment(): Record<string, string> {
+    const apiKey = process.env.API_KEY || 'change-this-in-production';
+    
+    // Security warning for production deployments with default values
+    if (!this.isLocalStack && apiKey === 'change-this-in-production') {
+      console.warn('⚠️  WARNING: Using default API key in production! Set API_KEY environment variable.');
+    }
+    
     return {
       LOG_LEVEL: this.isLocalStack ? 'DEBUG' : 'INFO',
       DYNAMODB_TABLE_NAME: this.usersTable.tableName,
+      NODE_ENV: this.isLocalStack ? 'development' : 'production',
+      // Security configuration
+      SUPPRESS_ERROR_DETAILS: this.isLocalStack ? 'false' : 'true',
+      ALLOWED_ORIGINS: this.isLocalStack
+        ? 'http://localhost:3000,http://localhost:8080'
+        : process.env.PROD_ALLOWED_ORIGINS || 'https://yourdomain.com',
+      VALID_API_KEY: apiKey,
       ...(this.isLocalStack && {
         AWS_ENDPOINT_URL: 'http://host.docker.internal:4566',
         DYNAMODB_ENDPOINT: 'http://host.docker.internal:4566',
@@ -166,7 +219,14 @@ export class UserApiStack extends cdk.Stack {
   }
 
   private createApiGateway(): apigateway.RestApi {
-    return new apigateway.RestApi(this, 'UserApi', {
+    // Create API key for authentication
+    const apiKey = new apigateway.ApiKey(this, 'UserApiKey', {
+      apiKeyName: `user-api-key-${this.isLocalStack ? 'local' : 'prod'}`,
+      description: 'API key for User Management API',
+      enabled: true,
+    });
+
+    const api = new apigateway.RestApi(this, 'UserApi', {
       restApiName: 'User Management API',
       description: 'API for managing users with DynamoDB persistence',
       deployOptions: {
@@ -177,12 +237,47 @@ export class UserApiStack extends cdk.Stack {
         dataTraceEnabled: true,
         metricsEnabled: true,
       },
+      // Fix CORS security vulnerability - restrict origins
       defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS,
-        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowOrigins: this.isLocalStack
+          ? ['http://localhost:3000', 'http://localhost:8080']
+          : [process.env.ALLOWED_ORIGINS || 'https://yourdomain.com'],
+        allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
         allowHeaders: ['Content-Type', 'X-Amz-Date', 'Authorization', 'X-Api-Key'],
+        allowCredentials: true,
       },
     });
+
+    // Create usage plan and associate API key
+    const usagePlan = new apigateway.UsagePlan(this, 'UserApiUsagePlan', {
+      name: 'UserApiUsagePlan',
+      description: 'Usage plan for User Management API',
+      apiStages: [{
+        api: api,
+        stage: api.deploymentStage,
+      }],
+      // Add rate limiting for security
+      throttle: {
+        rateLimit: 100,  // requests per second
+        burstLimit: 200, // burst capacity
+      },
+      quota: {
+        limit: 10000,    // requests per day
+        period: apigateway.Period.DAY,
+      },
+    });
+
+    usagePlan.addApiKey(apiKey);
+
+    // Output the API key for reference (in non-production environments)
+    if (this.isLocalStack) {
+      new cdk.CfnOutput(this, 'ApiKeyOutput', {
+        value: apiKey.keyId,
+        description: 'API Key ID for testing (LocalStack)',
+      });
+    }
+
+    return api;
   }
 
   private setupApiRoutes(
@@ -192,27 +287,38 @@ export class UserApiStack extends cdk.Stack {
       getUserFunction: NodejsFunction;
       deleteUserFunction: NodejsFunction;
       healthFunction: NodejsFunction;
-    }
+    },
+    authorizer: apigateway.TokenAuthorizer
   ): void {
-    // Health check endpoint
+    // Health check endpoint (no authentication required for monitoring)
     const healthResource = api.root.addResource('health');
-    healthResource.addMethod('GET', new apigateway.LambdaIntegration(functions.healthFunction));
+    healthResource.addMethod('GET', new apigateway.LambdaIntegration(functions.healthFunction), {
+      authorizationType: apigateway.AuthorizationType.NONE,
+    });
 
-    // Users resource
+    // Users resource (protected endpoints)
     const usersResource = api.root.addResource('users');
 
-    // POST /users - Create user
+    // POST /users - Create user (requires JWT authorization)
     usersResource.addMethod('POST', new apigateway.LambdaIntegration(functions.createUserFunction), {
+      authorizationType: apigateway.AuthorizationType.CUSTOM,
+      authorizer: authorizer,
       requestValidatorOptions: {
         validateRequestBody: true,
         validateRequestParameters: false,
       },
     });
 
-    // User by ID resource
+    // User by ID resource (protected endpoints)
     const userResource = usersResource.addResource('{id}');
-    userResource.addMethod('GET', new apigateway.LambdaIntegration(functions.getUserFunction));
-    userResource.addMethod('DELETE', new apigateway.LambdaIntegration(functions.deleteUserFunction));
+    userResource.addMethod('GET', new apigateway.LambdaIntegration(functions.getUserFunction), {
+      authorizationType: apigateway.AuthorizationType.CUSTOM,
+      authorizer: authorizer,
+    });
+    userResource.addMethod('DELETE', new apigateway.LambdaIntegration(functions.deleteUserFunction), {
+      authorizationType: apigateway.AuthorizationType.CUSTOM,
+      authorizer: authorizer,
+    });
   }
 
   private createMonitoringDashboard(

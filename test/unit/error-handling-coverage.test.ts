@@ -548,32 +548,18 @@ describe('Lambda Handler Branch Coverage', () => {
     it('should test create-user handler with edge case body parsing', async () => {
       // This tests the uncovered branch in create-user.ts line 33
       // Testing cases where body parsing might have edge cases
-      const { handler } = require('../../src/lambda/create-user')
+      const { createUserHandler } = require('../../src/lambda/create-user')
       
-      const event = {
+      const event = createAPIGatewayEvent({
         body: '{"id":"test","name":"Test User"}',
-        pathParameters: null,
-        queryStringParameters: null,
-        headers: {},
-        multiValueHeaders: {},
-        httpMethod: 'POST',
-        isBase64Encoded: false,
-        path: '/',
-        stageVariables: null,
-        requestContext: {
-          accountId: '123456789012',
-          apiId: 'test-api',
-          stage: 'test',
-          requestId: 'test-request-id'
-        },
-        resource: '/'
-      } as APIGatewayProxyEvent
+        httpMethod: 'POST'
+      })
 
       // Mock successful creation
       docClientMock.on(PutCommand).resolves({})
 
       // Act
-      const result = await handler(event) as APIGatewayProxyResult
+      const result = await Effect.runPromise(createUserHandler(event)) as APIGatewayProxyResult
 
       // Assert
       expect(result.statusCode).toBe(201)

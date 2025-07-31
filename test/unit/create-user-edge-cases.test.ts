@@ -13,7 +13,10 @@ describe('Create User Edge Cases', () => {
 
   const createMockAPIGatewayEvent = (overrides: Partial<APIGatewayProxyEvent> = {}): APIGatewayProxyEvent => ({
     body: null,
-    headers: {},
+    headers: {
+      'X-Api-Key': 'tr5ycwc5m3', // Default API key for testing
+      ...overrides.headers
+    },
     multiValueHeaders: {},
     httpMethod: 'POST',
     isBase64Encoded: false,
@@ -35,7 +38,12 @@ describe('Create User Edge Cases', () => {
       resourceId: 'test-resource',
       resourcePath: '/',
       identity: {} as any,
-      authorizer: null,
+      authorizer: {
+        userId: 'test-user',
+        email: 'test@example.com',
+        scope: 'read,write',
+        tokenIssuer: 'user-management-service'
+      },
     } as any,
     resource: '/',
     ...overrides,

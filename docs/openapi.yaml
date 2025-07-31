@@ -77,13 +77,13 @@ paths:
               basic:
                 summary: Basic user creation
                 value:
-                  id: "user-123"
-                  name: "John Doe"
+                  id: user-123
+                  name: John Doe
               test:
                 summary: Test user
                 value:
-                  id: "test-user-localstack-1674567890"
-                  name: "Test User LocalStack"
+                  id: test-user-localstack-1674567890
+                  name: Test User LocalStack
       responses:
         '201':
           description: User created successfully
@@ -95,8 +95,8 @@ paths:
                 success:
                   summary: Successful user creation
                   value:
-                    id: "user-123"
-                    name: "John Doe"
+                    id: user-123
+                    name: John Doe
                     createdAt: "2025-01-15T10:30:00.000Z"
                     updatedAt: "2025-01-15T10:30:00.000Z"
         '400':
@@ -109,15 +109,15 @@ paths:
                 missing_body:
                   summary: Missing request body
                   value:
-                    error: "Request body is required"
+                    error: Request body is required
                 validation_error:
                   summary: Validation error
                   value:
-                    error: "Validation failed"
-                    message: "Invalid input data"
+                    error: Validation failed
+                    message: Invalid input data
                     errors:
-                      - "id is required"
-                      - "name must be a non-empty string"
+                      - id is required
+                      - name must be a non-empty string
         '409':
           description: Conflict - User already exists
           content:
@@ -128,7 +128,7 @@ paths:
                 user_exists:
                   summary: User already exists
                   value:
-                    error: "User with this ID already exists"
+                    error: User with this ID already exists
         '500':
           description: Internal Server Error
           content:
@@ -139,8 +139,8 @@ paths:
                 database_error:
                   summary: Database connection error
                   value:
-                    error: "Database error occurred"
-                    message: "Failed to connect to DynamoDB"
+                    error: Database error occurred
+                    message: Failed to connect to DynamoDB
 
   /users/{id}:
     get:
@@ -173,10 +173,10 @@ paths:
           examples:
             basic:
               summary: Basic user ID
-              value: "user-123"
+              value: user-123
             test:
               summary: Test user ID
-              value: "test-user-localstack-1674567890"
+              value: test-user-localstack-1674567890
       responses:
         '200':
           description: User found and returned successfully
@@ -188,8 +188,8 @@ paths:
                 success:
                   summary: Successful user retrieval
                   value:
-                    id: "user-123"
-                    name: "John Doe"
+                    id: user-123
+                    name: John Doe
                     createdAt: "2025-01-15T10:30:00.000Z"
                     updatedAt: "2025-01-15T10:30:00.000Z"
         '400':
@@ -202,11 +202,11 @@ paths:
                 missing_id:
                   summary: Missing user ID
                   value:
-                    error: "User ID is required"
+                    error: User ID is required
                 invalid_id:
                   summary: Invalid user ID format
                   value:
-                    error: "Invalid user ID format"
+                    error: Invalid user ID format
         '404':
           description: User not found
           content:
@@ -217,9 +217,9 @@ paths:
                 not_found:
                   summary: User not found
                   value:
-                    error: "User not found"
-                    message: "User with ID 'user-123' was not found"
-                    userId: "user-123"
+                    error: User not found
+                    message: User with ID 'user-123' was not found
+                    userId: user-123
         '500':
           description: Internal Server Error
           content:
@@ -230,8 +230,8 @@ paths:
                 database_error:
                   summary: Database query error
                   value:
-                    error: "Database error occurred"
-                    message: "Failed to query DynamoDB"
+                    error: Database error occurred
+                    message: Failed to query DynamoDB
 
     delete:
       summary: Delete user by ID
@@ -264,10 +264,10 @@ paths:
           examples:
             basic:
               summary: Basic user ID
-              value: "user-123"
+              value: user-123
             test:
               summary: Test user ID
-              value: "test-user-localstack-1674567890"
+              value: test-user-localstack-1674567890
       responses:
         '204':
           description: User deleted successfully (no content returned)
@@ -281,11 +281,11 @@ paths:
                 missing_id:
                   summary: Missing user ID
                   value:
-                    error: "User ID is required"
+                    error: User ID is required
                 invalid_id:
                   summary: Invalid user ID format
                   value:
-                    error: "Invalid user ID format"
+                    error: Invalid user ID format
         '404':
           description: User not found
           content:
@@ -296,9 +296,9 @@ paths:
                 not_found:
                   summary: User not found
                   value:
-                    error: "User not found"
-                    message: "User with ID 'user-123' was not found"
-                    userId: "user-123"
+                    error: User not found
+                    message: User with ID 'user-123' was not found
+                    userId: user-123
         '500':
           description: Internal Server Error
           content:
@@ -309,8 +309,8 @@ paths:
                 database_error:
                   summary: Database deletion error
                   value:
-                    error: "Database error occurred"
-                    message: "Failed to delete from DynamoDB"
+                    error: Database error occurred
+                    message: Failed to delete from DynamoDB
 
 components:
   schemas:
@@ -326,13 +326,13 @@ components:
           pattern: '^[a-zA-Z0-9\-_]+$'
           minLength: 1
           maxLength: 255
-          example: "user-123"
+          example: user-123
         name:
           type: string
           description: Full name of the user
           minLength: 1
           maxLength: 255
-          example: "John Doe"
+          example: John Doe
       additionalProperties: false
 
     UserResponse:
@@ -346,11 +346,11 @@ components:
         id:
           type: string
           description: Unique identifier for the user
-          example: "user-123"
+          example: user-123
         name:
           type: string
           description: Full name of the user
-          example: "John Doe"
+          example: John Doe
         createdAt:
           type: string
           format: date-time
@@ -371,11 +371,11 @@ components:
         error:
           type: string
           description: Human-readable error message
-          example: "An error occurred"
+          example: An error occurred
         message:
           type: string
           description: Additional error details
-          example: "Detailed error information"
+          example: Detailed error information
       additionalProperties: false
 
     ValidationErrorResponse:
@@ -386,19 +386,19 @@ components:
         error:
           type: string
           description: Human-readable error message
-          example: "Validation failed"
+          example: Validation failed
         message:
           type: string
           description: Validation error details
-          example: "Invalid input data"
+          example: Invalid input data
         errors:
           type: array
           description: List of specific validation errors
           items:
             type: string
           example:
-            - "id is required"
-            - "name must be a non-empty string"
+            - id is required
+            - name must be a non-empty string
       additionalProperties: false
 
     UserNotFoundErrorResponse:
@@ -411,15 +411,15 @@ components:
         error:
           type: string
           description: Error type identifier
-          example: "User not found"
+          example: User not found
         message:
           type: string
           description: Detailed error message
-          example: "User with ID 'user-123' was not found"
+          example: User with ID 'user-123' was not found
         userId:
           type: string
           description: The ID that was not found
-          example: "user-123"
+          example: user-123
       additionalProperties: false
 
     DatabaseErrorResponse:
@@ -431,11 +431,11 @@ components:
         error:
           type: string
           description: Error type identifier
-          example: "Database error occurred"
+          example: Database error occurred
         message:
           type: string
           description: Database error details
-          example: "Failed to connect to DynamoDB"
+          example: Failed to connect to DynamoDB
         cause:
           type: object
           description: Additional error context (optional)

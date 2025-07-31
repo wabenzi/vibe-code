@@ -14,7 +14,10 @@ const docClientMock = mockClient(DynamoDBDocumentClient)
 // Helper function to create test API Gateway events
 const createAPIGatewayEvent = (overrides: Partial<APIGatewayProxyEvent> = {}): APIGatewayProxyEvent => ({
   body: null,
-  headers: {},
+  headers: {
+    'X-Api-Key': 'tr5ycwc5m3', // Default API key for testing
+    ...overrides.headers
+  },
   multiValueHeaders: {},
   httpMethod: 'GET',
   isBase64Encoded: false,
@@ -52,7 +55,12 @@ const createAPIGatewayEvent = (overrides: Partial<APIGatewayProxyEvent> = {}): A
       userAgent: 'test-agent',
       userArn: null,
     },
-    authorizer: null,
+    authorizer: {
+      userId: 'test-user',
+      email: 'test@example.com',
+      scope: 'read,write',
+      tokenIssuer: 'user-management-service'
+    },
   },
   resource: '/',
   ...overrides,
