@@ -1,3 +1,4 @@
+# Docker Compose v2 format
 services:
   localstack:
     container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"

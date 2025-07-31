@@ -93,7 +93,7 @@ This project includes full LocalStack support for local development and contract
 
 ```bash
 # Check service status
-docker-compose ps
+docker compose ps
 
 # View logs
 npm run local:logs

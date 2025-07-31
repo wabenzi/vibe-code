@@ -92,7 +92,7 @@ show_logs() {
             docker logs -f localstack-main
             ;;
         "all")
-            docker-compose logs -f
+            docker compose logs -f
             ;;
         *)
             log_error "Unknown service: $service"

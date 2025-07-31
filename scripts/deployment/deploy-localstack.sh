@@ -66,7 +66,7 @@ set_localstack_env() {
 start_services() {
     log_info "Starting LocalStack services..."
     cd "${PROJECT_DIR}"
-    docker-compose up -d
+    docker compose up -d
     
     # Wait for services to be ready
     log_info "Waiting for services to be ready..."
@@ -114,7 +114,7 @@ teardown_services() {
     cd "${PROJECT_DIR}"
     
     # Stop and remove containers defined in docker-compose
-    docker-compose down -v
+    docker compose down -v
     
     # Clean up any orphaned LocalStack containers
     log_info "Cleaning up any orphaned LocalStack containers..."

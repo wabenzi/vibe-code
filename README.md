@@ -41,7 +41,7 @@ API Gateway → Lambda Functions → DynamoDB
 - **TypeScript** - Project compilation (`npm install -g typescript`)
 
 **For Local Development:**
-- **Docker & Docker Compose** - LocalStack container runtime
+- **Docker & Docker Compose v2** - LocalStack container runtime
 
 **Optional Tools (Enhanced Experience):**
 - **jq** - JSON processing for enhanced test output
@@ -99,12 +99,12 @@ The setup script will:
 ```bash
 # System dependencies
 sudo apt-get update
-sudo apt-get install nodejs npm awscli docker.io docker-compose jq bc curl
+sudo apt-get install nodejs npm awscli docker.io jq bc curl
 
 # Global packages
 sudo npm install -g aws-cdk typescript
 
-# Docker setup
+# Docker setup (includes Docker Compose v2)
 sudo systemctl start docker
 sudo usermod -aG docker $USER  # Re-login after this
 ```
@@ -118,6 +118,8 @@ sudo usermod -aG docker $USER  # Re-login after this
 # Global packages
 npm install -g aws-cdk typescript
 ```
+
+> **Note**: This project uses Docker Compose v2 (`docker compose` command). Docker Desktop includes Compose v2 by default. On Linux, ensure you have a recent Docker version that includes Compose v2, or install the `docker-compose-plugin` package.
 
 ### ⚙️ AWS Configuration
 

@@ -139,7 +139,7 @@ paths:
 ```bash
 # scripts/validate-scripts.sh - Comprehensive validation pipeline
 validate_shell_scripts()     # ShellCheck for bash/zsh syntax validation
-validate_yaml_configs()      # yq validation for docker-compose, CDK configs
+validate_yaml_configs()      # yq validation for docker compose, CDK configs
 validate_json_schemas()      # JSON schema validation for package.json, tsconfig
 validate_openapi_spec()      # OpenAPI 3.1 specification compliance
 validate_typescript()        # Strict TypeScript compilation
