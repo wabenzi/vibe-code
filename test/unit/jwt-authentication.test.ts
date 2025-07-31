@@ -5,7 +5,7 @@
 
 import { APIGatewayTokenAuthorizerEvent, APIGatewayAuthorizerResult, Context } from 'aws-lambda'
 import { handler } from '../../src/lambda/authorizer'
-import { createTestJWTToken, verifyTestJWTToken, TestTokenConfig } from '../../src/lambda/utils/jwt-test-utils'
+import { createTestJWTToken, verifyTestJWTToken, TestTokenConfig } from '../utils/jwt-test-utils'
 
 // Mock the JWT secret for testing
 process.env.JWT_SECRET = 'test-secret-key-for-development-only'
