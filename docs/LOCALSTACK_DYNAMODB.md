@@ -18,8 +18,8 @@ This document describes the LocalStack infrastructure that uses DynamoDB for loc
 ## Files Structure
 
 ### Infrastructure
-- `infrastructure/local-user-api-stack.ts` - LocalStack CDK stack with DynamoDB
-- `bin/local-app.ts` - CDK app that deploys LocalStack stack
+- `infrastructure/user-api-stack.ts` - Unified CDK stack with DynamoDB (auto-detects LocalStack vs AWS)
+- `infrastructure/app.ts` - CDK app entry point (handles both AWS and LocalStack deployment)
 
 ### Application Layer
 - `src/infrastructure/dynamo-user-repository.ts` - Unified DynamoDB repository (supports both AWS and LocalStack)

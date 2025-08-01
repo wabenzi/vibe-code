@@ -1,11 +1,24 @@
 import { ApiClient, createTestUser, getApiUrl } from '../utils/api-client';
 import { withRetry, withRetryTest } from '../utils/retry';
+import { validateIntegrationEnvironment, printIntegrationError } from '../utils/docker-utils';
 
 describe('Retry Mechanism Demonstration', () => {
   let apiClient: ApiClient;
   
   beforeAll(async () => {
     const apiUrl = getApiUrl();
+
+    // Validate integration environment before running tests
+    console.log('🔍 Validating integration test environment...');
+    const validation = await validateIntegrationEnvironment(apiUrl);
+
+    if (!validation.valid) {
+      printIntegrationError(validation.errors);
+      throw new Error('Integration test environment validation failed. See error message above.');
+    }
+
+    console.log('✅ Integration environment validated for retry demo tests');
+
     apiClient = new ApiClient(apiUrl, {
       maxAttempts: 3,
       baseDelayMs: 500, // Shorter delay for demo

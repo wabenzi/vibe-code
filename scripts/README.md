@@ -6,33 +6,41 @@ This directory contains deployment, testing, and development scripts for the AWS
 
 ```text
 scripts/
-├── README.md                    # This documentation
-├── common-logging.sh           # Shared logging library
-├── validate-scripts.sh         # Script quality validation
-├── deployment/                 # Deployment scripts
-│   ├── deploy-localstack.sh   # LocalStack deployment and lifecycle
-│   └── deploy-aws.sh          # AWS cloud deployment
-├── testing/                   # Test and validation scripts
-│   ├── test-localstack.sh     # LocalStack API testing
-│   ├── test-deployment.sh     # Deployment validation
-│   ├── test-logging.sh        # Logging system tests
-│   └── test-all.sh           # Comprehensive test suite
-├── development/               # Development utilities
-│   └── local-dev.sh          # Local development helper
-└── archive/                  # Archived/deprecated scripts
-    ├── debug-test.sh         # Debug testing script
-    ├── test-pagination.sh    # AWS CLI pagination tests
-    └── direct-deploy.sh      # Direct LocalStack deployment (archived)
+├── README.md                        # This documentation
+├── CLEANUP_SUMMARY.md              # Project cleanup documentation
+├── macOS-setup.sh                  # macOS development environment setup
+├── deployment/                     # Deployment scripts
+│   ├── deploy-aws.sh              # AWS cloud deployment
+│   └── deploy-localstack.sh       # LocalStack deployment and lifecycle
+├── testing/                       # Test and validation scripts
+│   ├── test-all.sh               # Comprehensive test suite
+│   ├── test-deployment.sh        # AWS deployment validation
+│   ├── test-localstack.sh        # LocalStack API testing
+│   ├── test-enterprise.sh        # Enterprise test runner
+│   ├── test-integration-safe.sh   # Safe integration testing
+│   ├── test-logging.sh           # Logging system tests
+│   ├── security-test.sh          # Security testing
+│   ├── security-test-deployment.sh # Deployment security validation
+│   ├── check-localstack.sh       # LocalStack health checks
+│   └── test-localstack-repository.ts # TypeScript LocalStack repository tests
+├── development/                   # Development utilities
+│   ├── local-dev.sh              # Local development helper
+│   └── docs.sh                   # Documentation generation
+├── utils/                        # Utility libraries and tools
+│   ├── common-logging.sh         # Shared logging library
+│   ├── validate-scripts.sh       # Script quality validation
+│   └── generate-sloc-report.sh   # Source lines of code reporting
+└── archive/                      # Archived/deprecated scripts (empty)
 ```
 
 ## Common Logging Library
 
-All scripts use a common logging library (`common-logging.sh`) for consistent output formatting and better debugging.
+All scripts use a common logging library (`utils/common-logging.sh`) for consistent output formatting and better debugging.
 
 ### Usage Example
 ```bash
 # Source the logging library with custom prefix
-LOG_PREFIX="AWS" source "${BASH_SOURCE[0]}/common-logging.sh"
+LOG_PREFIX="AWS" source "${BASH_SOURCE[0]%/*}/utils/common-logging.sh"
 
 # Use logging functions
 log_info "Starting operation"
@@ -50,20 +58,20 @@ log_footer "Section completed successfully"
 
 ## Script Validation
 
-Use `validate-scripts.sh` to check all bash scripts for syntax errors and shellcheck issues
+Use `utils/validate-scripts.sh` to check all bash scripts for syntax errors and shellcheck issues
 
 ```bash
 # Basic validation
-./scripts/validate-scripts.sh
+./scripts/utils/validate-scripts.sh
 
 # Verbose output showing each test
-./scripts/validate-scripts.sh --verbose
+./scripts/utils/validate-scripts.sh --verbose
 
 # Fix permissions automatically
-./scripts/validate-scripts.sh --fix-permissions
+./scripts/utils/validate-scripts.sh --fix-permissions
 
 # Get help
-./scripts/validate-scripts.sh --help
+./scripts/utils/validate-scripts.sh --help
 ```
 
 ### Validation Features
@@ -303,7 +311,7 @@ Each script is self-contained with its own configuration variables
 
 ## Common Logging Library
 
-All scripts use a unified logging system provided by `common-logging.sh` for consistent output formatting and debugging.
+All scripts use a unified logging system provided by `utils/common-logging.sh` for consistent output formatting and debugging.
 
 ### Features
 
@@ -316,7 +324,7 @@ All scripts use a unified logging system provided by `common-logging.sh` for con
 
 ```bash
 # Source the library in your script
-source "${BASH_SOURCE[0]}/common-logging.sh"
+source "${BASH_SOURCE[0]%/*}/utils/common-logging.sh"
 
 # Basic logging
 log_info "Starting process..."
@@ -325,7 +333,7 @@ log_warning "Configuration issue detected"
 log_error "Failed to connect"
 
 # Custom prefix (before sourcing)
-LOG_PREFIX="AWS" source "${BASH_SOURCE[0]}/common-logging.sh"
+LOG_PREFIX="AWS" source "${BASH_SOURCE[0]%/*}/utils/common-logging.sh"
 log_info "This shows [AWS] prefix"
 
 # Debug logging
@@ -357,7 +365,7 @@ Run the comprehensive test script to see all logging functions in action
 
 ### Best Practices
 
-1. **Always source common-logging.sh** in new scripts for consistent output
+1. **Always source utils/common-logging.sh** in new scripts for consistent output
 2. **Use appropriate log levels** (info, success, warning, error)
 3. **Set custom prefixes** for script-specific identification
 4. **Use structured output** with headers and footers for long operations

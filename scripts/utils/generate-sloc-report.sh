@@ -12,13 +12,16 @@ if ! command -v bc >/dev/null 2>&1; then
     exit 1
 fi
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPORT_FILE="${PROJECT_ROOT}/SLOC_REPORT.md"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+REPORT_FILE="${PROJECT_ROOT}/docs/generated/SLOC_REPORT.md"
 TEMP_DIR="/tmp/sloc-analysis-$$"
 
 echo "🔍 Analyzing codebase for SLOC report..."
 echo "📁 Project root: ${PROJECT_ROOT}"
 echo "📄 Report file: ${REPORT_FILE}"
+
+# Ensure the output directory exists
+mkdir -p "$(dirname "${REPORT_FILE}")"
 
 # Create temporary directory for analysis
 mkdir -p "${TEMP_DIR}"

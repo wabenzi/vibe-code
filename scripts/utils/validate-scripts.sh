@@ -86,7 +86,13 @@ check_shellcheck() {
 
 # Get all bash scripts in the scripts directory
 get_scripts() {
-  find "${SCRIPT_DIR}" -name "*.sh" -type f | sort
+  find "${SCRIPT_DIR}" -name "*.sh" -type f \
+    -not -path "*/docs/generated/*" \
+    -not -path "*/clients/*" \
+    -not -path "*/coverage/*" \
+    -not -path "*/cdk.out/*" \
+    -not -path "*/node_modules/*" \
+    | sort
 }
 
 # Check if script has execute permissions

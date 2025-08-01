@@ -241,9 +241,8 @@ src/
     └── delete-user.ts
 
 infrastructure/
-├── app.ts                  # CDK app entry point
-├── user-api-stack.ts       # Production infrastructure
-└── local-user-api-stack.ts # LocalStack infrastructure
+├── app.ts                  # CDK app entry point (auto-detects AWS vs LocalStack)
+└── user-api-stack.ts       # Unified infrastructure (works with both AWS and LocalStack)
 
 test/
 ├── unit/                   # Isolated unit tests with mocks

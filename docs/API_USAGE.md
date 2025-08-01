@@ -6,19 +6,47 @@ This document provides examples of how to interact with the User Management API.
 
 Replace `YOUR_API_GATEWAY_URL` with the actual URL from your CDK deployment output.
 
-```
+```text
 https://YOUR_API_GATEWAY_URL/prod
 ```
 
 ## Authentication
 
-Currently, the API does not require authentication. In a production environment, you would typically add:
-- AWS IAM authentication
-- API keys
-- JWT tokens
-- OAuth 2.0
+**Production AWS Deployment**: Authentication is **REQUIRED** using JWT Bearer tokens.
+**LocalStack Development**: Authentication is **DISABLED** for easier testing.
+
+### Production Authentication Requirements
+
+All API endpoints (except `/health`) require a valid JWT Bearer token in the Authorization header:
+
+```http
+Authorization: Bearer <JWT_TOKEN>
+```
+
+The JWT token must:
+- Be signed with the configured JWT secret
+- Have valid audience (`user-management-api`)
+- Have valid issuer (`user-management-service`)
+- Not be expired
+- Follow the format: `Bearer <token>`
+
+### Development (LocalStack)
+
+When running against LocalStack, no authentication is required for easier development and testing.
+
+### Obtaining JWT Tokens
+
+In a production environment, JWT tokens would typically be obtained through:
+- OAuth 2.0 authorization server
+- AWS Cognito User Pools
+- Custom authentication service
+- Identity provider (Auth0, Okta, etc.)
+
+**Note**: This example implementation uses a Lambda authorizer for JWT validation. The JWT secret and configuration are set via environment variables during deployment.
 
 ## Endpoints
+
+**Important**: All endpoints except `/health` require JWT authentication in production AWS deployments. LocalStack development environments have authentication disabled for easier testing.
 
 ### 1. Create User
 
@@ -28,6 +56,7 @@ Creates a new user in the system.
 ```http
 POST /users
 Content-Type: application/json
+Authorization: Bearer <JWT_TOKEN>  # Required in production only
 
 {
   "id": "user123",
@@ -60,6 +89,7 @@ Retrieves a user by their ID.
 **Request:**
 ```http
 GET /users/{id}
+Authorization: Bearer <JWT_TOKEN>  # Required in production only
 ```
 
 **Response (200 OK):**
@@ -93,34 +123,112 @@ This will return a mock user without requiring database setup.
 
 ## cURL Examples
 
-### Create a User
+### Production (AWS) - With Authentication
 ```bash
+# Create a User
 curl -X POST "https://YOUR_API_GATEWAY_URL/prod/users" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "id": "alice123",
+    "name": "Alice Smith"
+  }'
+
+# Get a User
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "https://YOUR_API_GATEWAY_URL/prod/users/alice123"
+
+# Get Demo User (still requires auth in production)
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  "https://YOUR_API_GATEWAY_URL/prod/users/test"
+```
+
+### Development (LocalStack) - No Authentication
+```bash
+# Create a User
+curl -X POST "http://localhost:4566/restapis/API_ID/local/_user_request_/users" \
   -H "Content-Type: application/json" \
   -d '{
     "id": "alice123",
     "name": "Alice Smith"
   }'
-```
 
-### Get a User
-```bash
-curl "https://YOUR_API_GATEWAY_URL/prod/users/alice123"
-```
+# Get a User
+curl "http://localhost:4566/restapis/API_ID/local/_user_request_/users/alice123"
 
-### Get Demo User
-```bash
-curl "https://YOUR_API_GATEWAY_URL/prod/users/test"
+# Get Demo User
+curl "http://localhost:4566/restapis/API_ID/local/_user_request_/users/test"
 ```
 
 ## JavaScript/TypeScript Examples
 
-### Using fetch API
+### Production (AWS) - With Authentication
+
+```typescript
+// Create user
+const createUser = async (id: string, name: string, token: string) => {
+  const response = await fetch('https://YOUR_API_GATEWAY_URL/prod/users', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ id, name }),
+  });
+  
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing JWT token');
+    }
+    if (response.status === 403) {
+      throw new Error('Forbidden: Insufficient permissions');
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return response.json();
+};
+
+// Get user
+const getUser = async (id: string, token: string) => {
+  const response = await fetch(`https://YOUR_API_GATEWAY_URL/prod/users/${id}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Unauthorized: Invalid or missing JWT token');
+    }
+    if (response.status === 404) {
+      throw new Error('User not found');
+    }
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  
+  return response.json();
+};
+
+// Usage
+try {
+  const jwtToken = 'your-jwt-token-here';
+  const newUser = await createUser('bob456', 'Bob Johnson', jwtToken);
+  console.log('Created user:', newUser);
+  
+  const retrievedUser = await getUser('bob456', jwtToken);
+  console.log('Retrieved user:', retrievedUser);
+} catch (error) {
+  console.error('Error:', error.message);
+}
+```
+
+### Development (LocalStack) - No Authentication
 
 ```typescript
 // Create user
 const createUser = async (id: string, name: string) => {
-  const response = await fetch('https://YOUR_API_GATEWAY_URL/prod/users', {
+  const response = await fetch('http://localhost:4566/restapis/API_ID/local/_user_request_/users', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -137,7 +245,7 @@ const createUser = async (id: string, name: string) => {
 
 // Get user
 const getUser = async (id: string) => {
-  const response = await fetch(`https://YOUR_API_GATEWAY_URL/prod/users/${id}`);
+  const response = await fetch(`http://localhost:4566/restapis/API_ID/local/_user_request_/users/${id}`);
   
   if (!response.ok) {
     if (response.status === 404) {
@@ -160,8 +268,9 @@ try {
   console.error('Error:', error.message);
 }
 ```
+```
 
-### Using axios
+### Using axios (Production)
 
 ```typescript
 import axios from 'axios';
@@ -173,6 +282,11 @@ const api = axios.create({
   },
 });
 
+// Add JWT token to all requests
+const setAuthToken = (token: string) => {
+  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+};
+
 // Create user
 const createUser = async (id: string, name: string) => {
   try {
@@ -180,6 +294,12 @@ const createUser = async (id: string, name: string) => {
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        throw new Error('Unauthorized: Invalid or missing JWT token');
+      }
+      if (error.response?.status === 403) {
+        throw new Error('Forbidden: Insufficient permissions');
+      }
       throw new Error(error.response?.data?.error || error.message);
     }
     throw error;
@@ -193,6 +313,9 @@ const getUser = async (id: string) => {
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        throw new Error('Unauthorized: Invalid or missing JWT token');
+      }
       if (error.response?.status === 404) {
         throw new Error('User not found');
       }
@@ -201,6 +324,10 @@ const getUser = async (id: string) => {
     throw error;
   }
 };
+
+// Usage
+const jwtToken = 'your-jwt-token-here';
+setAuthToken(jwtToken);
 ```
 
 ## Error Codes
@@ -210,8 +337,32 @@ const getUser = async (id: string) => {
 | 200 | Success | User retrieved successfully |
 | 201 | Created | User created successfully |
 | 400 | Bad Request | Invalid input data |
+| 401 | Unauthorized | Missing or invalid JWT token |
+| 403 | Forbidden | Valid token but insufficient permissions |
 | 404 | Not Found | User does not exist |
 | 500 | Internal Server Error | Database or server error |
+
+### Authentication Error Examples
+
+**401 Unauthorized** (Missing token):
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+**401 Unauthorized** (Invalid token):
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
+**403 Forbidden** (Valid token, insufficient scope):
+```json
+{
+  "message": "User is not authorized to access this resource"
+}
 
 ## Rate Limiting
 

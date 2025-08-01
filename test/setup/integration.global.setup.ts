@@ -52,15 +52,15 @@ export default async function integrationGlobalSetup() {
     // Check if LocalStack is already running
     try {
       await axios.get('http://localhost:4566/_localstack/health');
-      console.log('📋 LocalStack already running, checking infrastructure...');
+      console.log('📋 LocalStack already running, redeploying to ensure current build...');
 
-      // If LocalStack is running, just deploy/update infrastructure
-      console.log('🏗️  Deploying test infrastructure...');
+      // If LocalStack is running, redeploy to ensure current build is deployed
+      console.log('🏗️  Deploying current build to LocalStack...');
       await execAsync('./scripts/deployment/deploy-localstack.sh deploy', {
         env: { ...process.env, NODE_ENV: process.env.NODE_ENV || 'test' }
       });
     } catch {
-      // LocalStack not running, do full deployment
+      // LocalStack not running, do full deployment (which includes building)
       await deployLocalStack();
     }
     

@@ -56,6 +56,8 @@
     "test:enterprise:contract": "scripts/testing/test-enterprise.sh contract",
     "test:enterprise:behavioral": "scripts/testing/test-enterprise.sh behavioral",
     "test:enterprise:ci": "scripts/testing/test-enterprise.sh ci",
+    "test:coverage": "jest --coverage --coverageReporters=text --coverageReporters=html",
+    "test:coverage:report": "jest --coverage --coverageReporters=html && open coverage/index.html",
     "docs:validate": "scripts/development/docs.sh validate",
     "docs:serve": "scripts/development/docs.sh serve",
     "docs:generate": "scripts/development/docs.sh generate",
@@ -64,10 +66,8 @@
     "lint": "echo 'Linting TypeScript code...' && tsc --noEmit && echo 'TypeScript compilation check passed ✅'",
     "lint:check": "tsc --noEmit --pretty",
     "lint:fix": "echo 'No linter configured for auto-fix. Consider adding ESLint or Prettier.'",
-    "coverage": "jest --coverage --coverageReporters=text --coverageReporters=html",
-    "coverage:report": "jest --coverage --coverageReporters=html && open coverage/index.html",
-    "sloc": "scripts/generate-sloc-report.sh",
-    "sloc:report": "scripts/generate-sloc-report.sh && cat SLOC_REPORT.md",
+    "sloc": "scripts/utils/generate-sloc-report.sh",
+    "sloc:report": "scripts/utils/generate-sloc-report.sh && cat docs/generated/SLOC_REPORT.md",
     "clean": "rm -rf dist/ build/ node_modules/ coverage/ cdk.out/ clients/ tmp/ temp/ *.tmp *.log .cache/ cache/ **/*.tsbuildinfo && npm install"
   },
   "keywords": [

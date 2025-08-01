@@ -40,6 +40,10 @@ logs/
 # Test coverage
 coverage/
 
+# Generated documentation
+docs/generated/
+clients/
+
 # Temporary files
 tmp/
 temp/
@@ -76,4 +80,4 @@ cache/
 results.txt
 
 # Generated reports
-SLOC_REPORT.md
+docs/chat*.json

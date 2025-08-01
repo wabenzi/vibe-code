@@ -166,11 +166,13 @@ npm run test:unit
 
 LocalStack provides a complete AWS emulation environment for development:
 
+> **⚠️ Important**: Integration tests require LocalStack to be running. The tests **cannot assume LocalStack is running** and will fail with connection errors if not started first.
+
 ```bash
 # Start LocalStack with DynamoDB
 npm run deploy:localstack
 
-# Verify deployment
+# Verify deployment (requires LocalStack to be running)
 npm run test:integration
 
 # Test the LocalStack API
@@ -284,29 +286,34 @@ This project maintains exceptional test coverage with comprehensive testing stra
 > **Coverage Configuration**: This project uses Istanbul/nyc for code coverage analysis. When certain code paths cannot be meaningfully tested (e.g., AWS SDK client instantiation, environment-specific configurations), use `/* istanbul ignore next */` comments to exclude them from coverage requirements while maintaining overall quality standards.
 
 ### Test Categories
+
+> **⚠️ Critical**: Integration tests require LocalStack to be running first. See [docs/TESTING_QUICK_START.md](docs/TESTING_QUICK_START.md) for detailed testing requirements.
+
 ```bash
-# Run all tests
-npm run test
-
-# CI test suite (comprehensive)
-npm run test:ci
-
-# Integration tests
-npm run test:integration
-
-# Contract tests (Pact)
-npm run test:contract
-
-# Unit tests only
+# Unit tests (✅ no dependencies required)
 npm run test:unit
 
-# Behavioral tests (Cucumber)
+# Check LocalStack status before integration tests
+curl -s http://localhost:4566/_localstack/health
+
+# Integration tests (⚠️ requires LocalStack)
+npm run deploy:localstack        # Start LocalStack first
+npm run test:integration        # Then run integration tests
+
+# Automated integration testing (✅ recommended - existing proven scripts)
+npm run test:all:localstack      # Handles LocalStack lifecycle automatically
+npm run test:enterprise          # Alternative comprehensive test suite
+
+# Contract tests (✅ no dependencies required)
+npm run test:contract
+
+# Behavioral tests (✅ no dependencies required)
 npm run test:behavioral
 ```
 
 ### Automated Deployment Testing
 ```bash
-# Run comprehensive deployment tests
+# Run comprehensive deployment tests (manages LocalStack automatically)
 npm run test:all
 
 # Test AWS deployment only

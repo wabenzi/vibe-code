@@ -1,5 +1,9 @@
 # Enterprise Testing Strategy
 
+**Comprehensive testing framework for enterprise-grade applications**
+
+> 🚀 **Need to run tests quickly? See [TESTING_QUICK_START.md](./TESTING_QUICK_START.md) for immediate instructions**
+
 This document outlines the comprehensive testing strategy implemented for the AWS Serverless User Management API, designed for enterprise-grade CI/CD pipelines.
 
 ## 🎯 Testing Philosophy

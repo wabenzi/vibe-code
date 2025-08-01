@@ -1,11 +1,11 @@
 {
   "LocalUserApiStack": {
-    "UserApiEndpoint22DD5314": "https://shbzbdk5p7.execute-api.localhost.localstack.cloud:4566/prod/",
-    "ApiKeyOutput": "hs7z4856jc",
-    "ApiUrl": "https://shbzbdk5p7.execute-api.localhost.localstack.cloud:4566/prod/",
-    "CreateUserFunctionName": "LocalUserApiStack-CreateUserFunctionB24ECA-820c6396",
-    "GetUserFunctionName": "LocalUserApiStack-GetUserFunctionD3D353B4-c5fea569",
-    "DeleteUserFunctionName": "LocalUserApiStack-DeleteUserFunctionF8A542-3a7ba2c3",
+    "UserApiEndpoint22DD5314": "https://gdrwre1yjt.execute-api.localhost.localstack.cloud:4566/prod/",
+    "ApiKeyOutput": "tl8ow6xeo3",
+    "ApiUrl": "https://gdrwre1yjt.execute-api.localhost.localstack.cloud:4566/prod/",
+    "CreateUserFunctionName": "LocalUserApiStack-CreateUserFunctionB24ECA-10ff6775",
+    "GetUserFunctionName": "LocalUserApiStack-GetUserFunctionD3D353B4-4f5e22ef",
+    "DeleteUserFunctionName": "LocalUserApiStack-DeleteUserFunctionF8A542-12006cdf",
     "DynamoDbTableName": "users-table"
   }
 }

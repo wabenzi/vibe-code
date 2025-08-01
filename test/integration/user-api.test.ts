@@ -1,13 +1,49 @@
 import { ApiClient, createTestUser, getApiUrl } from '../utils/api-client';
 import { withRetryTest } from '../utils/retry';
 import { AxiosError } from 'axios';
+import { validateIntegrationEnvironment, printIntegrationError } from '../utils/docker-utils';
 
+/**
+ * User API Integration Tests
+ *
+ * ⚠️  CRITICAL REQUIREMENT: These tests require LocalStack to be running on localhost:4566
+ *
+ * Before running these tests:
+ * 1. Start LocalStack: npm run deploy:localstack
+ * 2. Check status: npm run deploy:localstack:status
+ * 3. Run tests: npm run test:integration
+ *
+ * Or use the safe integration test script:
+ * npm run test:enterprise  # Handles LocalStack lifecycle automatically
+ *
+ * These tests will FAIL with "connect ECONNREFUSED 127.0.0.1:4566" if LocalStack is not running.
+ * This is expected behavior - integration tests require live infrastructure.
+ */
 describe('User API Integration Tests', () => {
   let apiClient: ApiClient;
   const createdUserIds: string[] = [];
 
   beforeAll(async () => {
     const apiUrl = getApiUrl();
+
+    // Validate integration environment before running tests
+    console.log('🔍 Validating integration test environment...');
+    const validation = await validateIntegrationEnvironment(apiUrl);
+
+    if (!validation.valid) {
+      printIntegrationError(validation.errors);
+      throw new Error('Integration test environment validation failed. See error message above.');
+    }
+
+    console.log('✅ Integration environment validated successfully');
+    console.log(`📋 Environment details:`);
+    console.log(`   - Docker: ${validation.docker.isRunning ? '✅ Running' : '❌ Not running'}`);
+    console.log(`   - LocalStack: ${validation.localstack.isHealthy ? '✅ Healthy' : '❌ Unhealthy'}`);
+    console.log(`   - API Deployment: ${validation.deployment.isDeployed ? '✅ Deployed' : '❌ Not deployed'}`);
+    if (validation.deployment.version) {
+      console.log(`   - API Version: ${validation.deployment.version}`);
+    }
+
     // Create ApiClient with specific retry options for integration tests
     apiClient = new ApiClient(apiUrl, {
       maxAttempts: 3,

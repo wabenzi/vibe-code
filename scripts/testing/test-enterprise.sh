@@ -10,9 +10,9 @@ set -e
 export LOG_PREFIX="TEST"
 # shellcheck disable=SC1091
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
+PROJECT_DIR="$(dirname "$(dirname "${SCRIPT_DIR}")")"
 # shellcheck source=scripts/utils/common-logging.sh
-source "${PROJECT_DIR}/utils/common-logging.sh"
+source "${PROJECT_DIR}/scripts/utils/common-logging.sh"
 
 # Configuration
 REPORTS_DIR="test/reports"
