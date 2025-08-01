@@ -139,7 +139,6 @@ NODE_ENV=production API_URL=https://your-api-id.execute-api.region.amazonaws.com
 - `test/utils/retry.ts` - Core retry utility
 - `test/utils/api-client.ts` - Enhanced API client with retry support
 - `test/integration/user-api.test.ts` - Updated critical tests to use retry wrapper
-- `test/integration/retry-demo.test.ts` - Demonstration of retry functionality
 
 ## Best Practices
 

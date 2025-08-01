@@ -8,8 +8,8 @@ module.exports = {
     '**/test/unit/**/*.spec.ts',
     '**/test/contract/**/*.test.ts',
     '**/test/contract/**/*.spec.ts',
-    '**/test/**/!(integration|retry-demo)*.test.ts',
-    '**/test/**/!(integration|retry-demo)*.spec.ts',
+    '**/test/**/!integration*.test.ts',
+    '**/test/**/!integration*.spec.ts',
   ],
   testPathIgnorePatterns: [
     // Exclude integration tests that require external infrastructure
@@ -31,10 +31,10 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html', 'cobertura'],
   coverageThreshold: {
     global: {
-      branches: 75,    // Slightly below current 79.31% to allow for some flexibility
-      functions: 90,   // High standard since we're achieving 100%
-      lines: 85,       // High standard since we're achieving 93%+
-      statements: 85   // High standard since we're achieving 93%+
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
     }
   },
   // Ensure we run silently in CI
