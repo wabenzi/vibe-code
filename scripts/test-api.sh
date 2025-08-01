@@ -11,11 +11,11 @@ if [ -n "$1" ]; then
   echo "🧪 Using provided API URL: $API_URL"
 elif [ -f "cdk-outputs.json" ]; then
   # Try to extract from UserApiStack first (AWS deployment)
-  API_URL=$(cat cdk-outputs.json | jq -r '.UserApiStack.ApiUrl // .UserApiStack.UserApiEndpoint22DD5314' 2>/dev/null || echo "")
+  API_URL=$(jq -r '.UserApiStack.ApiUrl // .UserApiStack.UserApiEndpoint22DD5314' cdk-outputs.json 2>/dev/null || echo "")
   
   # If not found, try LocalUserApiStack (LocalStack deployment)
   if [ -z "$API_URL" ] || [ "$API_URL" = "null" ]; then
-    API_URL=$(cat cdk-outputs.json | jq -r '.LocalUserApiStack.ApiUrl // .LocalUserApiStack.UserApiEndpoint22DD5314' 2>/dev/null || echo "")
+    API_URL=$(jq -r '.LocalUserApiStack.ApiUrl // .LocalUserApiStack.UserApiEndpoint22DD5314' cdk-outputs.json 2>/dev/null || echo "")
   fi
   
   if [ -n "$API_URL" ] && [ "$API_URL" != "null" ]; then
@@ -46,9 +46,8 @@ fi
 
 # Run the production API tests
 echo "🚀 Running production API test suite..."
-npm run test:api:prod
 
-if [ $? -eq 0 ]; then
+if npm run test:api:prod; then
   echo ""
   echo "🎉 All API tests passed!"
   echo "✅ Deployment is working correctly"

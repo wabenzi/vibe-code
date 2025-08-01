@@ -53,7 +53,7 @@ if [ "$ENVIRONMENT" = "production" ]; then
   echo "⚠️  PRODUCTION DEPLOYMENT"
   echo "Make sure you have:"
   echo "- Set JWT_SECRET environment variable"
-  echo "- Set API_KEY environment variable"
+  echo "- Set JWT_SECRET environment variable"
   echo "- Reviewed all changes"
   read -p "Continue with production deployment? (y/N): " -n 1 -r
   echo
@@ -66,9 +66,8 @@ fi
 # Run tests before deployment (unless skipped)
 if [ "$SKIP_TESTS" = false ]; then
   echo "🧪 Running pre-deployment tests..."
-  npm run test:ci
   
-  if [ $? -ne 0 ]; then
+  if ! npm run test:ci; then
     echo "❌ Tests failed! Deployment cancelled."
     exit 1
   fi
@@ -89,7 +88,7 @@ echo "✅ Deployment completed successfully"
 # Extract API URL from CDK output
 API_URL=""
 if [ -f "cdk-outputs.json" ]; then
-  API_URL=$(cat cdk-outputs.json | jq -r '.UserApiStack.ApiUrl // .UserApiStack.UserApiEndpoint22DD5314' 2>/dev/null || echo "")
+  API_URL=$(jq -r '.UserApiStack.ApiUrl // .UserApiStack.UserApiEndpoint22DD5314' cdk-outputs.json 2>/dev/null || echo "")
 fi
 
 if [ -z "$API_URL" ]; then

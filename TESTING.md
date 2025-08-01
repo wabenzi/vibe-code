@@ -1,10 +1,18 @@
-# Testing Quick Start Guide
+# Testing Guide
 
-**Quick reference for developers who need to run tests immediately**
+This document provides comprehensive information about running tests in the AWS Serverless User API project.
 
-> 📋 **For comprehensive testing strategy and enterprise patterns, see [TESTING.md](./TESTING.md)**
+## 🎯 Quick Test Commands
 
-This document provides practical, step-by-step information about running tests in the AWS Serverless User API project, with focus on common issues and solutions.
+### Default Development Testing
+```bash
+npm test                         # ✅ Unit tests only (fast, reliable, no dependencies)
+```
+
+### AWS Production Testing
+```bash
+npm run test:aws                 # 🌐 AWS/Production API tests (requires deployed API)
+```
 
 ## ⚠️ Critical Prerequisites for Integration Tests
 
@@ -21,16 +29,28 @@ connect ECONNREFUSED 127.0.0.1:4566
 
 ## Test Categories
 
-### 1. Unit Tests (✅ No Dependencies)
+### 1. Unit Tests (✅ No Dependencies) - **RECOMMENDED FOR DEVELOPMENT**
 ```bash
-npm run test:unit
+npm test                        # Default command - unit tests only
+npm run test:unit              # Explicit unit test command
 ```
 - **Status**: ✅ Always pass (no external dependencies)
-- **Coverage**: 260 tests covering business logic, validation, authentication
-- **Duration**: ~3 seconds
+- **Coverage**: 260 tests across 23 test suites (100% success rate)
+- **Duration**: ~8 seconds
 - **Dependencies**: None
+- **Scope**: Business logic, validation, authentication, AWS mocks, Effect operations
 
-### 2. Integration Tests (⚠️ Requires LocalStack + Current Build)
+### 2. AWS Production Tests (✅ When API is Deployed)
+```bash
+npm run test:aws               # Requires deployed API and API_BASE_URL
+```
+- **Status**: ✅ 100% pass rate (8/8 tests) when API is deployed
+- **Coverage**: Authentication, CRUD operations, error handling, performance
+- **Duration**: ~6 seconds
+- **Dependencies**: Deployed AWS API + `API_BASE_URL` environment variable
+- **Scope**: Live API verification, JWT authentication, real DynamoDB operations
+
+### 3. Integration Tests (⚠️ Requires LocalStack + Current Build)
 ```bash
 # ❌ This will FAIL if LocalStack is not running
 npm run test:integration
@@ -50,15 +70,16 @@ npm run test:enterprise         # Alternative comprehensive test suite
 - **Duration**: ~90 seconds (includes retry logic)
 - **Dependencies**: LocalStack container on port 4566, current TypeScript build
 
-### 3. Contract Tests (✅ No Dependencies)
+### 4. Contract Tests (✅ No Dependencies)
 ```bash
 npm run test:contract
 ```
 - **Status**: ✅ Uses Pact mock server (no external dependencies)
-- **Coverage**: Consumer-provider contract validation
+- **Coverage**: Consumer-provider contract validation (5/5 tests)
+- **Duration**: ~2 seconds
 - **Dependencies**: None (uses internal mock server)
 
-### 4. Behavioral Tests (✅ No Dependencies)
+### 5. Behavioral Tests (✅ No Dependencies)
 ```bash
 npm run test:behavioral
 ```

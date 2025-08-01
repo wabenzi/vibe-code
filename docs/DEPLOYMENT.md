@@ -1,5 +1,18 @@
 # Deployment Guide
 
+## 🎯 Quick Start Commands
+
+### AWS Production Deployment
+```bash
+npm run deploy:prod:test         # ✅ Recommended: Deploy + Test in one command
+```
+
+### Manual Deployment + Testing
+```bash
+npm run deploy:prod              # Deploy only
+npm run test:aws                 # Test separately
+```
+
 ## Prerequisites
 
 1. **AWS CLI**: Configure your AWS credentials
@@ -12,6 +25,53 @@
    ```bash
    npm install -g aws-cdk
    ```
+
+## AWS Production Deployment
+
+### Automated Deployment + Testing (Recommended)
+
+The simplest way to deploy and verify your API:
+
+```bash
+# Deploy to production and run API tests automatically
+npm run deploy:prod:test
+```
+
+This command:
+1. Runs pre-deployment unit tests
+2. Deploys infrastructure to AWS
+3. Extracts the API URL from deployment outputs
+4. Runs comprehensive API tests against the live environment
+5. Reports success/failure
+
+### Manual Deployment Process
+
+If you prefer step-by-step control:
+
+```bash
+# 1. Run unit tests first
+npm test
+
+# 2. Deploy to AWS
+npm run deploy:prod
+
+# 3. Test the deployed API
+npm run test:aws
+```
+
+### Environment-Specific Deployments
+
+```bash
+# Production deployment
+npm run deploy:prod:test
+
+# Staging deployment
+npm run deploy:staging:test
+
+# Deploy without running tests
+npm run deploy:prod              # Production only
+npm run deploy:staging           # Staging only
+```
 
 ## Local Development with LocalStack
 

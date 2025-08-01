@@ -1,11 +1,10 @@
 {
-  "LocalUserApiStack": {
-    "UserApiEndpoint22DD5314": "https://pvejxbui35.execute-api.localhost.localstack.cloud:4566/prod/",
-    "ApiKeyOutput": "qa02wccp7x",
-    "ApiUrl": "https://pvejxbui35.execute-api.localhost.localstack.cloud:4566/prod/",
-    "CreateUserFunctionName": "LocalUserApiStack-CreateUserFunctionB24ECA-cf242ef9",
-    "GetUserFunctionName": "LocalUserApiStack-GetUserFunctionD3D353B4-d6b680cf",
-    "DeleteUserFunctionName": "LocalUserApiStack-DeleteUserFunctionF8A542-f258eef4",
-    "DynamoDbTableName": "users-table"
+  "UserApiStack": {
+    "ApiUrl": "https://wtsom3t32i.execute-api.us-west-2.amazonaws.com/prod/",
+    "CreateUserFunctionName": "UserApiStack-CreateUserFunctionB24ECABE-k2tgQs5AMuiR",
+    "GetUserFunctionName": "UserApiStack-GetUserFunctionD3D353B4-zX7Fq5USWDl3",
+    "DynamoDbTableName": "users-table",
+    "UserApiEndpoint22DD5314": "https://wtsom3t32i.execute-api.us-west-2.amazonaws.com/prod/",
+    "DeleteUserFunctionName": "UserApiStack-DeleteUserFunctionF8A542EC-U3b2iV82zYL1"
   }
 }

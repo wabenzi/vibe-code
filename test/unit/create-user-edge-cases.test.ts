@@ -14,7 +14,7 @@ describe('Create User Edge Cases', () => {
   const createMockAPIGatewayEvent = (overrides: Partial<APIGatewayProxyEvent> = {}): APIGatewayProxyEvent => ({
     body: null,
     headers: {
-      'X-Api-Key': 'tr5ycwc5m3', // Default API key for testing
+      'Content-Type': 'application/json',
       ...overrides.headers
     },
     multiValueHeaders: {},

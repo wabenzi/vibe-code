@@ -150,11 +150,11 @@ export class UserApiStack extends cdk.Stack {
   }
 
   private createBaseEnvironment(): Record<string, string> {
-    const apiKey = process.env.API_KEY || 'change-this-in-production';
+    const jwtSecret = process.env.JWT_SECRET || 'development-secret-key';
     
-    // Security warning for production deployments with default values
-    if (!this.isLocalStack && apiKey === 'change-this-in-production') {
-      console.warn('⚠️  WARNING: Using default API key in production! Set API_KEY environment variable.');
+    // Security warning for production deployments with default JWT secret
+    if (!this.isLocalStack && jwtSecret === 'development-secret-key') {
+      console.warn('⚠️  WARNING: Using default JWT secret in production! Set JWT_SECRET environment variable.');
     }
     
     return {
@@ -166,7 +166,7 @@ export class UserApiStack extends cdk.Stack {
       ALLOWED_ORIGINS: this.isLocalStack
         ? 'http://localhost:3000,http://localhost:8080'
         : process.env.PROD_ALLOWED_ORIGINS || 'https://yourdomain.com',
-      VALID_API_KEY: apiKey,
+      JWT_SECRET: jwtSecret,
       ...(this.isLocalStack && {
         AWS_ENDPOINT_URL: 'http://host.docker.internal:4566',
         DYNAMODB_ENDPOINT: 'http://host.docker.internal:4566',

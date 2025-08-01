@@ -92,7 +92,7 @@ describe('Health Handler Edge Cases', () => {
     expect(result.headers).toMatchObject({
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': 'http://localhost:3000',
-      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Amz-Security-Token',
       'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',

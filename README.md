@@ -188,16 +188,40 @@ aws --endpoint-url=http://localhost:4566 dynamodb scan \
 ### AWS Deployment
 
 ```bash
-# Deploy to AWS
-npm run deploy:aws
+# Deploy to AWS Production
+npm run deploy:prod
 
-# Run integration tests against AWS
-npm run test:deployment
+# Deploy to AWS Production + Run API Tests
+npm run deploy:prod:test           # ✅ Recommended: Deploy and verify in one command
 
-# Test the API (replace with your API Gateway URL)
+# Manual API testing after deployment
+npm run test:aws                   # Verify deployed API works correctly
+
+# Test individual operations (replace with your API Gateway URL)
 curl -X POST https://{api-id}.execute-api.us-west-2.amazonaws.com/prod/users \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $(node generate-test-token.js test-user)" \
   -d '{"id": "user1", "name": "John Doe"}'
+
+# Generate JWT token for manual testing
+node generate-test-token.js        # Generate test JWT token
+node generate-test-token.js --export  # Output export command format
+```
+
+### Deployment + Testing Workflow
+
+The recommended workflow combines deployment and verification:
+
+```bash
+# 1. Deploy and test in one command (recommended)
+npm run deploy:prod:test
+
+# 2. Manual verification (optional)
+npm test                           # Run unit tests
+npm run test:aws                   # Test deployed API
+
+# 3. Cleanup when done
+npm run teardown                   # Remove AWS resources
 ```
 
 ## � API Documentation
@@ -285,13 +309,42 @@ This project maintains exceptional test coverage with comprehensive testing stra
 
 > **Coverage Configuration**: This project uses Istanbul/nyc for code coverage analysis. When certain code paths cannot be meaningfully tested (e.g., AWS SDK client instantiation, environment-specific configurations), use `/* istanbul ignore next */` comments to exclude them from coverage requirements while maintaining overall quality standards.
 
+### Quick Test Commands
+
+#### Default Development Testing
+```bash
+npm test                         # ✅ Unit tests only (fast, reliable, no dependencies)
+```
+
+#### AWS Production Testing
+```bash
+npm run test:aws                 # 🌐 AWS/Production API tests (requires deployed API)
+```
+
+### Complete Test Suite
+
+| Command | Purpose | Dependencies | Success Rate |
+|---------|---------|--------------|--------------|
+| `npm test` | **Unit tests only** | None | ✅ 100% (260/260 tests) |
+| `npm run test:unit` | Unit tests (explicit) | None | ✅ 100% (260/260 tests) |
+| `npm run test:aws` | **AWS API tests** | Deployed API + API_BASE_URL | ✅ 100% (8/8 tests) |
+| `npm run test:integration` | Integration tests | LocalStack environment | Requires LocalStack |
+| `npm run test:contract` | Contract tests | None - uses Pact mocks | ✅ 100% (5/5 tests) |
+| `npm run test:behavioral` | Behavioral tests | Cucumber.js | ✅ Available |
+| `npm run test:api` | All API tests | API environment | Varies by environment |
+| `npm run test:ci` | CI pipeline tests | Full coverage report | ✅ Comprehensive |
+
 ### Test Categories
 
 > **⚠️ Critical**: Integration tests require LocalStack to be running first. See [docs/TESTING_QUICK_START.md](docs/TESTING_QUICK_START.md) for detailed testing requirements.
 
 ```bash
-# Unit tests (✅ no dependencies required)
-npm run test:unit
+# Unit tests (✅ no dependencies required - RECOMMENDED FOR DEVELOPMENT)
+npm test                         # Default: unit tests only
+
+# AWS API verification (✅ for deployed environments)
+export API_BASE_URL="https://your-api-url.execute-api.us-west-2.amazonaws.com/prod/"
+npm run test:aws                 # Verify live AWS deployment
 
 # Check LocalStack status before integration tests
 curl -s http://localhost:4566/_localstack/health

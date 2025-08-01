@@ -10,6 +10,45 @@ Replace `YOUR_API_GATEWAY_URL` with the actual URL from your CDK deployment outp
 https://YOUR_API_GATEWAY_URL/prod
 ```
 
+## 🧪 Automated Testing (Recommended)
+
+The easiest way to test the API is using the built-in automated test suites:
+
+### Quick Testing Commands
+```bash
+# Test deployed AWS API (requires API to be deployed)
+npm run test:aws
+
+# Deploy and test in one command (recommended)
+npm run deploy:prod:test
+```
+
+### Generate JWT Tokens for Manual Testing
+```bash
+# Generate a test JWT token
+node generate-test-token.js
+
+# Generate with custom user ID
+node generate-test-token.js my-user-123
+
+# Generate with export command format
+node generate-test-token.js --export
+```
+
+The automated tests provide comprehensive coverage including:
+- ✅ Authentication verification
+- ✅ CRUD operations testing
+- ✅ Error handling validation
+- ✅ Performance testing
+- ✅ Automatic cleanup
+
+**Benefits of automated testing:**
+- No manual token management
+- Comprehensive test coverage
+- Automatic cleanup of test data
+- Performance validation
+- Error scenario testing
+
 ## Authentication
 
 **Production AWS Deployment**: Authentication is **REQUIRED** using JWT Bearer tokens.

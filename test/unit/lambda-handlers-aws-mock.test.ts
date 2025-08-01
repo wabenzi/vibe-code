@@ -12,12 +12,12 @@ const dynamoDBMock = mockClient(DynamoDBClient)
 const docClientMock = mockClient(DynamoDBDocumentClient)
 
 // Helper function to create test API Gateway events
-const createAPIGatewayEvent = (overrides: Partial<APIGatewayProxyEvent> = {}): APIGatewayProxyEvent => ({
-  body: null,
-  headers: {
-    'X-Api-Key': 'tr5ycwc5m3', // Default API key for testing
-    ...overrides.headers
-  },
+  const createMockEvent = (overrides: Partial<APIGatewayProxyEvent> = {}): APIGatewayProxyEvent => ({
+    body: null,
+    headers: {
+      'Content-Type': 'application/json',
+      ...overrides.headers
+    },
   multiValueHeaders: {},
   httpMethod: 'GET',
   isBase64Encoded: false,
@@ -86,7 +86,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
   describe('Health Handler', () => {
     it('should return healthy status', async () => {
       // Arrange
-      const event = createAPIGatewayEvent()
+      const event = createMockEvent()
 
       // Act
       const result = await healthHandler(event)
@@ -103,7 +103,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
   describe('Create User Handler', () => {
     it('should successfully create a user with real service logic', async () => {
       // Arrange
-      const event = createAPIGatewayEvent({
+      const event = createMockEvent({
         httpMethod: 'POST',
         body: JSON.stringify({
           id: 'lambda-test-user',
@@ -142,7 +142,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
 
     it('should handle validation errors from real validation logic', async () => {
       // Arrange
-      const event = createAPIGatewayEvent({
+      const event = createMockEvent({
         httpMethod: 'POST',
         body: JSON.stringify({
           id: '', // Invalid: empty ID
@@ -166,7 +166,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
 
     it('should handle DynamoDB errors from real repository', async () => {
       // Arrange
-      const event = createAPIGatewayEvent({
+      const event = createMockEvent({
         httpMethod: 'POST',
         body: JSON.stringify({
           id: 'failing-user',
@@ -197,7 +197,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
 
     it('should handle duplicate user creation (conditional check failure)', async () => {
       // Arrange
-      const event = createAPIGatewayEvent({
+      const event = createMockEvent({
         httpMethod: 'POST',
         body: JSON.stringify({
           id: 'existing-user',
@@ -229,7 +229,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
   describe('Get User Handler', () => {
     it('should successfully retrieve a user with real service logic', async () => {
       // Arrange
-      const event = createAPIGatewayEvent({
+      const event = createMockEvent({
         httpMethod: 'GET',
         pathParameters: { id: 'lambda-get-user' }
       })
@@ -267,7 +267,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
 
     it('should handle user not found with real error handling', async () => {
       // Arrange
-      const event = createAPIGatewayEvent({
+      const event = createMockEvent({
         httpMethod: 'GET',
         pathParameters: { id: 'non-existent-user' }
       })
@@ -291,7 +291,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
 
     it('should handle missing path parameters', async () => {
       // Arrange
-      const event = createAPIGatewayEvent({
+      const event = createMockEvent({
         httpMethod: 'GET',
         pathParameters: null
       })
@@ -314,7 +314,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
   describe('Delete User Handler', () => {
     it('should successfully delete a user with real service logic', async () => {
       // Arrange
-      const event = createAPIGatewayEvent({
+      const event = createMockEvent({
         httpMethod: 'DELETE',
         pathParameters: { id: 'lambda-delete-user' }
       })
@@ -355,7 +355,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
 
     it('should handle delete of non-existent user', async () => {
       // Arrange
-      const event = createAPIGatewayEvent({
+      const event = createMockEvent({
         httpMethod: 'DELETE',
         pathParameters: { id: 'non-existent-delete-user' }
       })
@@ -379,7 +379,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
 
     it('should handle missing path parameters for delete', async () => {
       // Arrange
-      const event = createAPIGatewayEvent({
+      const event = createMockEvent({
         httpMethod: 'DELETE',
         pathParameters: null
       })
@@ -406,7 +406,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       const userName = 'Lifecycle Test User'
 
       // 1. Create User
-      const createEvent = createAPIGatewayEvent({
+      const createEvent = createMockEvent({
         httpMethod: 'POST',
         body: JSON.stringify({ id: userId, name: userName })
       })
@@ -417,7 +417,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       expect(createResult.statusCode).toBe(201)
 
       // 2. Retrieve User
-      const getEvent = createAPIGatewayEvent({
+      const getEvent = createMockEvent({
         httpMethod: 'GET',
         pathParameters: { id: userId }
       })
@@ -438,7 +438,7 @@ describe('Lambda Handlers with Real Services and AWS SDK Mocks', () => {
       expect(retrievedUser.name).toBe(userName)
 
       // 3. Delete User
-      const deleteEvent = createAPIGatewayEvent({
+      const deleteEvent = createMockEvent({
         httpMethod: 'DELETE',
         pathParameters: { id: userId }
       })

@@ -58,7 +58,7 @@ const DEFAULT_HEADERS = {
   // Fixed CORS vulnerability - restrict origins based on environment
   'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGINS || 
     (process.env.NODE_ENV === 'production' ? 'https://yourdomain.com' : 'http://localhost:3000'),
-  'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+  'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Amz-Security-Token',
   'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
   'Access-Control-Allow-Credentials': 'true',
   // Security headers

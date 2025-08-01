@@ -68,7 +68,7 @@ describe('Lambda Handlers - Source Code Tests', () => {
       expect(result.headers).toEqual({
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': 'http://localhost:3000',
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Amz-Security-Token',
         'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
         'Access-Control-Allow-Credentials': 'true',
         'Content-Security-Policy': 'default-src \'self\'',

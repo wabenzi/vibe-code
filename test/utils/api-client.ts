@@ -28,7 +28,6 @@ export class ApiClient {
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
-        'X-Api-Key': process.env.API_KEY || 'tr5ycwc5m3', // Default for LocalStack testing
       },
       // Disable SSL verification for LocalStack
       httpsAgent: process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0' ? undefined : 

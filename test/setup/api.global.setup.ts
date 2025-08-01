@@ -12,8 +12,8 @@ export default async (): Promise<void> => {
   }
   
   // Ensure JWT token utilities are available
-  if (!process.env.JWT_SECRET && !process.env.API_KEY) {
-    console.warn('⚠️  No JWT_SECRET or API_KEY set, using development defaults');
+  if (!process.env.JWT_SECRET) {
+    console.warn('⚠️  No JWT_SECRET set, using development default');
     process.env.JWT_SECRET = 'development-secret-key';
     process.env.API_KEY = 'tr5ycwc5m3';
   }
